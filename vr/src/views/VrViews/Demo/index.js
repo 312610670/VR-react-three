@@ -28,11 +28,11 @@ const DemoBox = () => {
     let demo = new THREE.TextureLoader().load(fore)
     const faceMaterialArray = []
     // 给每个面填充不同的材质
-    faceMaterialArray.push(new THREE.MeshBasicMaterial({ map: demo }))
+    faceMaterialArray.push(new THREE.MeshBasicMaterial({ color:'yellow' }))
     faceMaterialArray.push(new THREE.MeshBasicMaterial({ color: 0x0051ba }))
     faceMaterialArray.push(new THREE.MeshBasicMaterial({ color: 0xffd500 }))
     faceMaterialArray.push(new THREE.MeshBasicMaterial({ color: 0xff5800 }))
-    faceMaterialArray.push(new THREE.MeshBasicMaterial({ color: 'yellow' })) //正面
+    faceMaterialArray.push(new THREE.MeshBasicMaterial({ map: demo })) //正面
     faceMaterialArray.push(new THREE.MeshBasicMaterial({ color: 0xffffff }))
     material = new THREE.MeshFaceMaterial(faceMaterialArray)
     //  material = new THREE.MeshBasicMaterial({ map: demo });
@@ -51,17 +51,18 @@ const DemoBox = () => {
   
 
   const initControls = () => {
-     controls = new OrbitControls(camera, renderer.domElement)
+    controls = new OrbitControls(camera, renderer.domElement)
+    
 
   }
-  // const painting = () => {
-  //   var geometry = new THREE.Geometry();
-  //   geometry.vertices.push(new THREE.Vector3( -10, 0, 0) );
-  //   geometry.vertices.push(new THREE.Vector3( 0, 10, 0) );
-  //   geometry.vertices.push(new THREE.Vector3(10, 0, 0));
-  //   var line = new THREE.Line(geometry, material);
-  //   scene.add( line );
-  // }
+  const painting = () => {
+    var geometry = new THREE.Geometry();
+    geometry.vertices.push(new THREE.Vector3( -10, 0, 0) );
+    geometry.vertices.push(new THREE.Vector3( 0, 10, 0) );
+    geometry.vertices.push(new THREE.Vector3(10, 0, 0));
+    var line = new THREE.Line(geometry, material);
+    scene.add( line );
+  }
 
   
   const animate = () => {
@@ -73,6 +74,8 @@ const DemoBox = () => {
 
   useEffect(() => {
     init()
+    animate()
+    painting()
     return () => {
       
     };
