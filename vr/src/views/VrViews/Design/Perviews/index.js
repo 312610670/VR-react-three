@@ -99,8 +99,6 @@ const Preview = () => {
     camera.position.set(10,0,0)
     const geometry = new THREE.SphereGeometry(500, 60, 40);
     geometry.scale(-1, 1, 1);
-  
-
     //防止跨域用canvas作为纹理
     let canvas = document.createElement("canvas");
     canvas.style.backgroundColor = "rgba(255,255,255,0)";
