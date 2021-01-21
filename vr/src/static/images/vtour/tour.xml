@@ -75,14 +75,14 @@
 
 
 	
-	<scene name="scene_1" title="1" onstart="" thumburl="panos/1.tiles/thumb.jpg" lat="" lng="" heading="">
+	<scene name="scene_2" title="2" onstart="" thumburl="panos/2.tiles/thumb.jpg" lat="" lng="" heading="">
 
 		<view hlookat="0.0" vlookat="0.0" fovtype="MFOV" fov="120" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="auto" />
 
-		<preview url="panos/1.tiles/preview.jpg" />
+		<preview url="panos/2.tiles/preview.jpg" />
 
 		<image>
-			<cube url="panos/1.tiles/pano_%s.jpg" />
+			<cube url="panos/2.tiles/pano_%s.jpg" />
 		</image>
 
 	</scene>

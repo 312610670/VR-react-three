@@ -10,7 +10,7 @@ import {
 } from '../reselect'
 import { actions } from '../reducers'
 
-import { Button } from 'antd';
+import { Button, Switch} from 'antd';
 
 import fore from 'static/images/4.jpg'
 import hotspot from 'static/images/hotspot.jpg'
@@ -38,7 +38,7 @@ let mesh;
 let arr = [];
 let renderer = new THREE.WebGLRenderer({ antialias: true });
   
- // 用户交互
+ // 用户是否交互
  let isUserInteracting = false
 //  const [isUserInteracting, setIsUserInteracting] = useState(false);
  // 点击X 轴坐标
@@ -66,7 +66,6 @@ const Preview = () => {
   const dispatch = useDispatch() 
   const vrData = useSelector(selectVrData())
   const isHotspot = useSelector(selectIsHotspot()) // 是否投放跳转点
-  console.log(isHotspot,'---首次改变',isHotspot)
 
   const [width, setWidth] = useState();
   const [height, setHeight] = useState();
@@ -417,8 +416,13 @@ const Preview = () => {
     isTag = !isTag
     console.log(isTag)
   }
+
+  const isHotspotChange = () => {
+    dispatch(actions.changeIsHotspot())
+  }
   return (
     <div className='container'>
+      <Switch checkedChildren="开启" unCheckedChildren="关闭" checked={isHotspot}  onChange={ ()=>isHotspotChange()} />{isHotspot.toString()}
       <Button type="primary" onClick={()=>changeTag()}>Button</Button>
       <div id="container" className="panoramaContent"></div>
     </div>

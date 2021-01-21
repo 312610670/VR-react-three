@@ -20,12 +20,14 @@ var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 // 盒子 物体
 var geometry = new THREE.BoxGeometry(50, 50, 50); // 六张图
-var geometryone = new THREE.SphereGeometry(500, 60, 40); // 球体
-geometryone.scale(-1, 1, 1); 
 
-let materialone
+// w外层盒子
+var geometryone = new THREE.SphereGeometry(500, 60, 40); // 球体
+  geometryone.scale(-1, 1, 1); 
+
 // 背景 
 let material
+
 // 创建平面
 let cube
 

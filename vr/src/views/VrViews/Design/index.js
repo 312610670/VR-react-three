@@ -5,6 +5,8 @@ import Edit  from './Edit/index'
 import { Button } from 'antd';
 import reducer from './reducers.js';
 import { injectReducer } from 'reducers';
+import { Switch, Route, Redirect } from 'react-router-dom';
+
 
 injectReducer('vrData',reducer)
 
