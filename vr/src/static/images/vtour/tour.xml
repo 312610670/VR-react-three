@@ -77,13 +77,15 @@
 	
 	<scene name="scene_2" title="2" onstart="" thumburl="panos/2.tiles/thumb.jpg" lat="" lng="" heading="">
 
-		<view hlookat="0.0" vlookat="0.0" fovtype="MFOV" fov="120" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="auto" />
+		<view hlookat="63.546" vlookat="6.679" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="auto" />
 
 		<preview url="panos/2.tiles/preview.jpg" />
 
 		<image>
 			<cube url="panos/2.tiles/pano_%s.jpg" />
 		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="56.436" atv="7.974" linkedscene="scene_2" />
+		<hotspot name="spot2" style="skin_hotspotstyle" ath="102.053" atv="6.505" linkedscene="scene_2" />
 
 	</scene>
 
