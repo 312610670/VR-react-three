@@ -1,12 +1,13 @@
 import React, { useMemo, useEffect, useState, useRef, useCallback } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { v4 as uuidv4 } from 'uuid';
 import * as THREE from 'three'
-import { selectVrData } from '../reselect'
-
 import OrbitControls from 'three-orbitcontrols'
 
-import { selectIsHotspot, selectIsDelete,  selectPanoramicData } from '../reselect'
+import { useDispatch, useSelector } from 'react-redux'
+import { selectVrData } from '../reselect'
+import { selectIsHotspot, selectIsDelete, selectPanoramicData } from '../reselect'
 import { actions } from '../reducers'
+
 
 import { Button, Switch } from 'antd'
 
@@ -14,9 +15,6 @@ import fore from 'static/images/4.jpg'
 import hotspot from 'static/images/hotspot.jpg'
 import './index.css'
 
-let xPositionArr = []
-let yPositionArr = []
-let zPositionArr = []
 
 const forType = 'Equirectangular'
 let scene = new THREE.Scene()
@@ -60,9 +58,9 @@ let variable
 const Preview = () => {
     const dispatch = useDispatch()
     const vrData = useSelector(selectVrData())
-  const isHotspot = useSelector(selectIsHotspot()) // 是否投放跳转点 删除
-  const isDelete = useSelector(selectIsDelete()) // 是否投放跳转点 删除
-  
+    const isHotspot = useSelector(selectIsHotspot()) // 是否投放跳转点 删除
+    const isDelete = useSelector(selectIsDelete()) // 是否投放跳转点 删除
+
     const panoramicData = useSelector(selectPanoramicData()) // 项目数据
 
     const [width, setWidth] = useState()
@@ -71,22 +69,21 @@ const Preview = () => {
 
     const drawedHotspotsData = panoramicData[0].anchorPoint
 
-   
-  
     const refIsHotspot = useRef(isHotspot)
     const refIsDelete = useRef(isDelete)
-    
+
     useEffect(() => {
         init()
         animate()
     }, [])
 
     useEffect(() => {
-      refIsHotspot.current = isHotspot
-      refIsDelete.current = isDelete
-    }, [isHotspot,isDelete])
+        refIsHotspot.current = isHotspot
+        refIsDelete.current = isDelete
+    }, [isHotspot, isDelete])
     //  初始化
     const init = (imgurl = [fore]) => {
+        console.log('執行初始化')
         let width = document.getElementById('container').getBoundingClientRect().width
         let height = document.getElementById('container').getBoundingClientRect().height - 32
         if (imgurl.length > 1) {
@@ -179,24 +176,21 @@ const Preview = () => {
 
     //绘制多个跳转热点
     const drawJumpHotSpots = (variable, newsrc) => {
-      console.log(variable, '数据')
-        let textImg = getCanvasFont( 100 , 50,'我也不知道','green')
-      
-        for (let i = 0, len = variable.length; i < len; i++) {
-            let position = variable[i].point
-            console.log(position, '---position')
+        console.log(variable, '数据')
+        let textImg = getCanvasFont(100, 50, '我也不知道', 'green')
+        variable.forEach(item => {
+            let position = item.point
             let canvas = document.createElement('canvas')
             canvas.style.backgroundColor = 'rgba(255,255,255,0)'
             let context = canvas.getContext('2d')
             canvas.width = 128
             canvas.height = 128
             let img = new Image()
-            //这里发布的时候会出现http://localhost:8083/web/dist/static/images/hotspot.jpg
             img.src = hotspot
             img.onload = function () {
                 context.drawImage(img, 0, 0, 128, 128)
                 // 纹理 添加canvas 图片
-                let texture = new THREE.Texture(textImg) //
+                let texture = new THREE.Texture(textImg) // 此处将 图片跟文字画到同一个数据中
                 texture.needsUpdate = true // 将其设置为true，以便在下次使用纹理时触发一次更新
                 texture.minFilter = THREE.LinearFilter //当一个纹素覆盖小于一个像素时，贴图将如何采样。默认值为THREE.LinearMipmapLinearFilter， 它将使用mipmapping以及三次线性滤镜。
                 var spriteMaterial = new THREE.SpriteMaterial({
@@ -204,7 +198,16 @@ const Preview = () => {
                     transparent: false,
                 })
                 var sprite = new THREE.Sprite(spriteMaterial)
-                sprite.scale.set(30, 30, 30)
+              sprite.scale.set(30, 30, 30)
+              /**
+               * 此处添加自定义属性 不能跟原有属性重复避免报错
+               * name: 添加锚点名称
+               * ids: 唯一ID
+               * iconUrl: 图标
+              */
+                sprite.name = item.name; 
+                sprite.ids = item.id;
+                sprite.iconUrl = '';
                 let rate = 0.8
                 var endV = new THREE.Vector3(
                     position.x * rate,
@@ -212,10 +215,9 @@ const Preview = () => {
                     position.z * rate
                 )
                 sprite.position.copy(endV)
-                // console.log(sprite, '---跳转热点')
                 scene.add(sprite)
             }
-        }
+        })
     }
 
     // 鼠標点击添加一个 确定点击位置  --  锚点 ---待配置 热点图片
@@ -223,8 +225,8 @@ const Preview = () => {
         isUserInteracting = true
         if (forType === 'Equirectangular') {
             event.preventDefault()
-          // let vector = new THREE.Vector3() //三维坐标对象
-          let vector =  camera.target 
+            // let vector = new THREE.Vector3() //三维坐标对象
+            let vector = camera.target
             vector.set(
                 ((event.clientX - 248) / (window.innerWidth - 248)) * 2 - 1,
                 -((event.clientY - 32) / (window.innerHeight - 32)) * 2 + 1,
@@ -238,142 +240,101 @@ const Preview = () => {
             raycaster.camera = camera
             let intersects = raycaster.intersectObjects(scene.children)
             //如果绘制热点属于激活状态
-            console.log(intersects, '---intersects')
-            let xAverage = intersects[0].point.x
-            let yAverage = intersects[0].point.y
-            let zAverage = intersects[0].point.z
-            let isZhou = 0
-            let average = []
-            average.push(xAverage)
-            average.push(yAverage)
-            average.push(zAverage)
-            average.forEach(el => {
-                if (el === 0) {
-                    isZhou += 1
-                }
-                return isZhou
+          console.log(intersects, '---intersects')
+              // 此处需要判断 是否有两个坐标为0 
+            let isOnShaft  = []
+            Object.keys(intersects[0].point).forEach((v) => {
+              if (intersects[0].point[v] === 0) {
+                isOnShaft.push(1)
+              }
             })
             // 添加標注
-          if (refIsHotspot.current && isZhou < 2 && !refIsDelete.current) {
-              let canvas = document.createElement('canvas')
-              canvas.style.backgroundColor = 'rgba(255,255,255,0)'
-              let context = canvas.getContext('2d')
-              canvas.width = 128
-              canvas.height = 128
-              let img = new Image()
-              //这里发布的时候会出现http://localhost:8083/web/dist/static/images/hotspot.jpg
-              // img.src = "www.baidu.com/img/flexible/logo/pc/result.png";
-              //发布用
-              img.src = hotspot
-              img.onload = function () {
-                  context.drawImage(img, 0, 0, 128, 128)
-                  let texture = new THREE.Texture(canvas)
-                  texture.needsUpdate = true
-                  texture.minFilter = THREE.LinearFilter
-                  var spriteMaterial = new THREE.SpriteMaterial({
-                      map: texture,
-                      transparent: false,
-                  })
-                  var sprite = new THREE.Sprite(spriteMaterial)
-                  sprite.scale.set(30, 30, 30)
-                  let rate = 0.8
-                  var endV = new THREE.Vector3(xAverage * rate, yAverage * rate, zAverage * rate)
-                  sprite.position.copy(endV)
+            if (refIsHotspot.current && isOnShaft.length < 2 && !refIsDelete.current) {
+                let canvas = document.createElement('canvas')
+                canvas.style.backgroundColor = 'rgba(255,255,255,0)'
+                let context = canvas.getContext('2d')
+                canvas.width = 128
+                canvas.height = 128
+                let img = new Image()
+                //这里发布的时候会出现http://localhost:8083/web/dist/static/images/hotspot.jpg
+                // img.src = "www.baidu.com/img/flexible/logo/pc/result.png";
+                //发布用
+                img.src = hotspot
+                img.onload = function () {
+                    context.drawImage(img, 0, 0, 128, 128)
+                    let texture = new THREE.Texture(canvas)
+                    texture.needsUpdate = true
+                    texture.minFilter = THREE.LinearFilter
+                    var spriteMaterial = new THREE.SpriteMaterial({
+                        map: texture,
+                        transparent: false,
+                    })
+                    var sprite = new THREE.Sprite(spriteMaterial)
+                    sprite.scale.set(30, 30, 30)
+                    let rate = 0.8
+                    var endV = new THREE.Vector3(intersects[0].point.x * rate, intersects[0].point.y * rate, intersects[0].point.z * rate)
+                    sprite.position.copy(endV)
                   scene.add(sprite)
-                  // if (intersects.length > 0) {
-                  //   var selected = intersects[0]; //取第一个物体
-                  //   setStartV(selected.point)
-                  //   xPositionArr.push(selected.point.x);
-                  //   yPositionArr.push(selected.point.y);
-                  //   zPositionArr.push(selected.point.z);
-                  // }
-                  // if (xPositionArr.length === 3) {
-                  //   document.getElementById("container").style.cursor = "default";
-                  //   let xAverage =
-                  //     (xPositionArr[0] + xPositionArr[1] + xPositionArr[2]) / 3;
-                  //   let yAverage =
-                  //     (yPositionArr[0] + yPositionArr[1] + yPositionArr[2]) / 3;
-                  //   let zAverage =
-                  //     (zPositionArr[0] + zPositionArr[1] + zPositionArr[2]) / 3;
-
-                  //   let canvas = document.createElement("canvas");
-                  //   canvas.style.backgroundColor = "rgba(255,255,255,0)";
-                  //   let context = canvas.getContext("2d");
-                  //   canvas.width = 128;
-                  //   canvas.height = 128;
-                  //   let img = new Image();
-                  //   //这里发布的时候会出现http://localhost:8083/web/dist/static/images/hotspot.jpg
-                  //   // img.src = "www.baidu.com/img/flexible/logo/pc/result.png";
-                  //   //发布用
-                  //   img.src = hotspot;
-                  //   img.onload = function () {
-                  //     context.drawImage(img, 0, 0,128,128);
-                  //     let texture = new THREE.Texture(canvas);
-                  //     texture.needsUpdate = true;
-                  //     texture.minFilter = THREE.LinearFilter;
-                  //     var spriteMaterial = new THREE.SpriteMaterial({
-                  //       map: texture,
-                  //       transparent: false
-                  //     });
-                  //     var sprite = new THREE.Sprite(spriteMaterial);
-                  //     sprite.scale.set(30, 30, 30);
-                  //     let rate = 0.8;
-                  //     var endV = new THREE.Vector3(
-                  //       xAverage * rate,
-                  //       yAverage * rate,
-                  //       zAverage * rate
-                  //     );
-                  //     sprite.position.copy(endV);
-                  //     scene.add(sprite);
-                  //     // dispatch(actions.changeIsHotspot())
-                  //   };
-
-                  //   xPositionArr = [];
-                  //   yPositionArr = [];
-                  //   zPositionArr = [];
-              }
-              //移除热点
-          } else {
-              if( !refIsDelete.current ) return 
-              if (intersects.length > 0) {
-                const target = intersects[0]
-                console.log(!refIsHotspot.current , refIsDelete.current, '删除打印结果')
-                  try {
-                      if (target.object && target.object.type.length > 0) {
-                          if (target.object.type.toLowerCase() === 'sprite') {
-                              scene.remove(target.object)
-                              // this.$store.commit("deletedHotSpot");
-                              // this.$store.commit("hideHotSpot");
-                              // let location = target.object.position;
-                              // let panAndTilt = this.calculatePanandTilt(
-                              //   location.x * 1.25,
-                              //   location.y * 1.25,
-                              //   location.z * 1.25
-                              // );
-                              // this.$store.commit("showJumpHotSpot");
-                              // this.$store.commit("saveTempLocation", {
-                              //   location: [
-                              //     location.x * 1.25,
-                              //     location.y * 1.25,
-                              //     location.z * 1.25
-                              //   ],
-                              //   panAndTilt: panAndTilt,
-                              //   ID:"JumpHotSpot",
-                              // });
-                          }
-                      }
-                  } catch (e) {
-                      console.log(e)
-                  }
-              }
-          }
-
+                  addHotspot(intersects[0].point)
+                }
+                //移除热点
+            } else {
+                if (!refIsDelete.current) return
+                if (intersects.length > 0) {
+                    const target = intersects[0]
+                    console.log(!refIsHotspot.current, refIsDelete.current, '删除打印结果')
+                    try {
+                        if (target.object && target.object.type.length > 0) {
+                            if (target.object.type.toLowerCase() === 'sprite') {
+                                scene.remove(target.object)
+                                // this.$store.commit("deletedHotSpot");
+                                // this.$store.commit("hideHotSpot");
+                                // let location = target.object.position;
+                                // let panAndTilt = this.calculatePanandTilt(
+                                //   location.x * 1.25,
+                                //   location.y * 1.25,
+                                //   location.z * 1.25
+                                // );
+                                // this.$store.commit("showJumpHotSpot");
+                                // this.$store.commit("saveTempLocation", {
+                                //   location: [
+                                //     location.x * 1.25,
+                                //     location.y * 1.25,
+                                //     location.z * 1.25
+                                //   ],
+                                //   panAndTilt: panAndTilt,
+                                //   ID:"JumpHotSpot",
+                                // });
+                            }
+                        }
+                    } catch (e) {
+                        console.log(e)
+                    }
+                }
+            }
         }
         onPointerDownPointerX = event.clientX
         onPointerDownPointerY = event.clientY
         onPointerDownLon = lon
         onPointerDownLat = lat
+  }
+  
+  // 添加后将数据同步redux 数组中
+  const addHotspot = (coordinate) =>{
+      console.log(coordinate,'---coordinate')
+      // 
+    let newAnchorPoint = {
+      point: {
+        x:coordinate.x,
+        y: coordinate.y,
+        z: coordinate.z,
+      },
+      id: uuidv4(),
+      name: '这是第二个锚点',
+      iconUrl: ''
     }
+    dispatch(actions.addAnchorPoint(newAnchorPoint))
+  }
 
     // 添加描述
     const addDsc = () => {
@@ -418,23 +379,22 @@ const Preview = () => {
         scene.add(rect)
     }
 
-  
     const getCanvasFont = (w, h, textValue, fontColor) => {
-      var canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      var ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#ff0000';//textBackground;
-      ctx.fillRect(0, 0, w, h);
-      ctx.font = h + "px '微软雅黑'";
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = fontColor;
-      ctx.fillText(textValue, w / 2, h / 2 + 3);
-      //document.body.appendChild(canvas);
-      return canvas;
-  }
-  
+        var canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        var ctx = canvas.getContext('2d')
+        ctx.fillStyle = '#ff0000' //textBackground;
+        ctx.fillRect(0, 0, w, h)
+        ctx.font = h + "px '微软雅黑'"
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillStyle = fontColor
+        ctx.fillText(textValue, w / 2, h / 2 + 3)
+        //document.body.appendChild(canvas);
+        return canvas
+    }
+
     // 鼠标滑动 全景查看
     const onDocumentMouseMove = event => {
         if (isUserInteracting === true) {

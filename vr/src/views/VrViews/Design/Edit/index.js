@@ -1,19 +1,21 @@
 import React, { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Switch, Menu } from 'antd'
-import { selectIsHotspot, selectIsDelete } from '../reselect'
-
 import { actions } from '../reducers'
+import { selectIsHotspot, selectIsDelete, selectPanoramicData } from '../reselect'
+
+
+import { Switch, Menu, Form, Input, Select } from 'antd'
 import { AppstoreOutlined, MailOutlined, SettingOutlined } from '@ant-design/icons'
 
 const { SubMenu } = Menu
-
+const { Option } = Select
 const Edit = () => {
+    const dispatch = useDispatch()
     const isHotspot = useSelector(selectIsHotspot())
     const isDelete = useSelector(selectIsDelete())
-    const dispatch = useDispatch()
+    const panoramicData = useSelector(selectPanoramicData()) // 项目数据
 
-  // 投放标注
+    // 投放标注
     const isHotspotChange = () => {
         dispatch(actions.changeIsHotspot(!isHotspot))
     }
@@ -30,26 +32,78 @@ const Edit = () => {
             anchorPoint: [{}],
         },
     ]
+    const [form] = Form.useForm()
+    const onGenderChange = value => {
+        switch (value) {
+            case 'male':
+                form.setFieldsValue({ note: 'Hi, man!' })
+                return
+            case 'female':
+                form.setFieldsValue({ note: 'Hi, lady!' })
+                return
+            case 'other':
+                form.setFieldsValue({ note: 'Hi there!' })
+                return
+            default:
+                return
+        }
+    }
+
     return (
-        <>
-            <div>
-                标注投放：{' '}
+        <div>
+            <Form.Item name='note' label='标注投放：'>
                 <Switch
                     checkedChildren='开启'
                     unCheckedChildren='关闭'
                     checked={isHotspot}
-                    onChange={() =>  dispatch(actions.changeIsHotspot(!isHotspot))}
+                    onChange={() => dispatch(actions.changeIsHotspot(!isHotspot))}
                 />
-        </div>
-        <div>
-                是否删除标注{' '}
+            </Form.Item>
+            <Form.Item name='note' label='是否删除标注'>
                 <Switch
                     checkedChildren='开启'
                     unCheckedChildren='关闭'
                     checked={isDelete}
                     onChange={() => dispatch(actions.changeIsDelete(!isDelete))}
                 />
-            </div>
+            </Form.Item>
+
+            <Form>
+                <Form.Item name='note' label='Note' rules={[{ required: true }]}>
+                    <Input style={{ width: 120 }} />
+                </Form.Item>
+                <Form.Item name='gender' label='Gender' rules={[{ required: true }]}>
+                    <Select
+                        style={{ width: 120 }}
+                        placeholder='Select a option and change input text above'
+                        onChange={onGenderChange}
+                        allowClear
+                    >
+                        <Option value='male'>male</Option>
+                        <Option value='female'>female</Option>
+                        <Option value='other'>other</Option>
+                    </Select>
+                </Form.Item>
+                <Form.Item
+                    noStyle
+                    shouldUpdate={(prevValues, currentValues) =>
+                        prevValues.gender !== currentValues.gender
+                    }
+                >
+                    {({ getFieldValue }) => {
+                        return getFieldValue('gender') === 'other' ? (
+                            <Form.Item
+                                name='customizeGender'
+                                label='Customize Gender'
+                                rules={[{ required: true }]}
+                            >
+                                <Input />
+                            </Form.Item>
+                        ) : null
+                    }}
+                </Form.Item>
+            </Form>
+
             <Menu
                 onClick={() => {
                     handleClick()
@@ -69,7 +123,7 @@ const Edit = () => {
                     </Menu.ItemGroup>
                 </SubMenu>
             </Menu>
-        </>
+        </div>
     )
 }
 
