@@ -23,8 +23,15 @@ export const selectIsHotspot = () =>
   });
 
 
-  // 每个项目的单独数据
+  // 每个项目的场景数据
 export const selectPanoramicData = () =>
   createSelector(selectGlobal, (state) => {
     return state.vrData.panoramicData 
+})
+
+
+// 项目总数据
+export const selectProjectData = () =>
+  createSelector(selectGlobal, (state) => {
+    return state.vrData.projectData 
 })

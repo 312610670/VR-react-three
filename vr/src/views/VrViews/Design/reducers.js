@@ -7,7 +7,10 @@ export const initialState = {
   // 全景图信息
 
   projectData: {
-    
+    name: '第一个项目',
+    id: '2102271653',
+    url: '',
+    meta: ''
   },
   panoramicData: [
     {
@@ -23,7 +26,7 @@ export const initialState = {
             y: -19.09902720876184,
             z: 466.1877327588506,
           },
-          id: '',
+          id: '1-1',
           name: '这是第一个锚点',
           iconUrl: ''
         },
@@ -33,7 +36,7 @@ export const initialState = {
             y: -189.1800093391692,
             z: 390.2798175065487,
           },
-          id: '',
+          id: '1-2',
           name: '这是第二个锚点',
           iconUrl: ''
         },
@@ -41,7 +44,7 @@ export const initialState = {
     },
     {
       name: '第二个场景',
-      id: '2102271653',
+      id: '2102091411',
       url: '',
       active: false,
       // 锚点信息
@@ -52,8 +55,8 @@ export const initialState = {
             y: -19.09902720876184,
             z: 466.1877327588506,
           },
-          id: '',
-          name: '这是第一个锚点',
+          id: '2-1',
+          name: '这是2-1锚点',
           iconUrl: ''
         },
         {
@@ -62,8 +65,8 @@ export const initialState = {
             y: -189.1800093391692,
             z: 390.2798175065487,
           },
-          id: '',
-          name: '这是第二个锚点',
+          id: '2-2',
+          name: '这是2-2锚点',
           iconUrl: ''
         },
       ]
