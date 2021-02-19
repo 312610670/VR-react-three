@@ -1,96 +1,128 @@
-import React, { useMemo, useEffect, useState, useRef, useCallback } from 'react'
-import { v4 as uuidv4 } from 'uuid';
+import React, { useEffect, useRef } from 'react'
+import { v4 as uuidv4 } from 'uuid'
 import * as THREE from 'three'
 import OrbitControls from 'three-orbitcontrols'
 
 import { useDispatch, useSelector } from 'react-redux'
 import { selectVrData } from '../reselect'
-import { selectIsHotspot, selectIsDelete, selectPanoramicData } from '../reselect'
+import { selectIsHotspot, selectIsDelete, selectActiveId } from '../reselect'
 import { actions } from '../reducers'
 
+// import { Button, Switch } from 'antd'
 
-import { Button, Switch } from 'antd'
+import fore from 'static/images/huisuo.jpg'
+import huisuo from 'static/images/huisuo.jpg'
+import haibian from 'static/images/haibian.jpg'
+import keting from 'static/images/keting.jpg'
+import haozhai from 'static/images/haozhai.jpg'
 
-import fore from 'static/images/4.jpg'
 import hotspot from 'static/images/hotspot.jpg'
 import './index.css'
 
-
 const forType = 'Equirectangular'
-let scene = new THREE.Scene()
-//  1、 透视相机                        可查看视野角度            长宽比                     近截面 和远截面
-let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1500)
-/**
- *  透视相机四个参数 ：视野角度
- *      长宽比
- *      近截面
- *      远截面
- **/
 
-let container = document.getElementById('container')
-let mesh
-let arr = []
-
-let renderer = new THREE.WebGLRenderer({ antialias: true })
+// let arr = []
 
 // -------------自定义滑动查看------------------------------
 // 用户是否交互
 let isUserInteracting = false
 //  const [isUserInteracting, setIsUserInteracting] = useState(false);
 // 点击X 轴坐标
-let onPointerDownPointerX = 0
-// 点击X 轴坐标
-let onPointerDownPointerY = 0
-let lon = 0
-let lat = 0
-let phi = 0
-let theta = 0
-let onPointerDownLon = lon
-let onPointerDownLat = lat
+// let onPointerDownPointerX = 0
+// // 点击X 轴坐标
+// let onPointerDownPointerY = 0
+// let lon = 0
+// let lat = 0
+// let phi = 0
+// let theta = 0
+// let onPointerDownLon = lon
+// let onPointerDownLat = lat
 // -------------自定义滑动查看------------------------------
 
 // 控制器 对象
-let controls
-
-// 添加锚点的信息
-let variable
 
 const Preview = () => {
+    let scene = new THREE.Scene()
+    //  1、 透视相机                        可查看视野角度            长宽比                     近截面 和远截面
+    let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1500)
+    /**
+     *  透视相机四个参数 ：视野角度
+     *      长宽比
+     *      近截面
+     *      远截面
+     **/
+    let renderer = new THREE.WebGLRenderer({ antialias: true })
+    let controls
+    let mesh
+
+    // 设置全场唯一canvas
+
     const dispatch = useDispatch()
     const vrData = useSelector(selectVrData())
     const isHotspot = useSelector(selectIsHotspot()) // 是否投放跳转点 删除
     const isDelete = useSelector(selectIsDelete()) // 是否投放跳转点 删除
 
-    const panoramicData = useSelector(selectPanoramicData()) // 项目数据
+    // const panoramicData = (selectPanoramicData()) // 项目数据
+    const activeId = useSelector(selectActiveId()) // 当前高亮视图ID
 
-    const [width, setWidth] = useState()
-    const [height, setHeight] = useState()
-    const [startV, setStartV] = useState()
-
-    const drawedHotspotsData = panoramicData[0].anchorPoint
+    console.log(vrData, '---panoramicData')
+    const { panoramicData } = vrData
 
     const refIsHotspot = useRef(isHotspot)
     const refIsDelete = useRef(isDelete)
+    const drawedHotspotsData = useRef([])
 
-    useEffect(() => {
-        init()
-        animate()
-    }, [])
+  useEffect(() => {
+      console.log(activeId, '切换的数据')
+      changeView(activeId ? activeId : '2102271653')
+      animate()
+    }, [activeId])
 
     useEffect(() => {
         refIsHotspot.current = isHotspot
         refIsDelete.current = isDelete
     }, [isHotspot, isDelete])
+
+    const changeView = id => {
+        // 初始化锚点数据
+        drawedHotspotsData.current = []
+        let showVr = []
+        panoramicData.forEach(item => {
+            if (item.id === id) {
+                showVr.push(item)
+                // 锚点 切换场景应当切换锚点数据
+                drawedHotspotsData.current = item.anchorPoint
+            }
+        })
+        init(showVr[0].url)
+    }
+
     //  初始化
-    const init = (imgurl = [fore]) => {
-        console.log('執行初始化')
+    const init = (imgurl = fore) => {
+        // 初始化先删除子节点
+        let container = document.getElementById('container')
+        if (container.childNodes.length) {
+            container.removeChild(container.childNodes[0])
+        }
+        let vrImgurl =
+            imgurl === 'imgurl'
+                ? huisuo
+                : imgurl === 'haibian'
+                ? haibian
+                : imgurl === 'keting'
+                ? keting
+                : imgurl === 'haozhai'
+                ? haozhai
+                : huisuo
+        console.log(vrImgurl, '---vrImgurl')
+        mesh && scene.remove(mesh)
         let width = document.getElementById('container').getBoundingClientRect().width
         let height = document.getElementById('container').getBoundingClientRect().height - 32
-        if (imgurl.length > 1) {
+        if ([vrImgurl].length > 1) {
             alert('抱歉，一张图请选择panorama1，六张图请选择panorama6且只支持cubeFaces')
             return
         }
-        //   //  三维坐标轴
+        //  三维坐标轴
         // var axesHelper = new THREE.AxesHelper(150);
         // scene.add(axesHelper);
 
@@ -111,12 +143,12 @@ const Preview = () => {
         canvas.style.backgroundColor = 'rgba(255,255,255,0)'
         let context = canvas.getContext('2d')
         let img = new Image()
-        img.src = fore
+        img.src = vrImgurl
         img.onload = function () {
             canvas.width = width
             canvas.height = height
             context.drawImage(img, 0, 0, width, height)
-            let demo = new THREE.TextureLoader().load(fore)
+            let demo = new THREE.TextureLoader().load(vrImgurl)
             let material = new THREE.MeshBasicMaterial({
                 map: demo, // 此处使用 demo 的参数 图片更为清晰
                 transparent: false,
@@ -127,48 +159,62 @@ const Preview = () => {
 
         //画已经保存的热点
         setTimeout(() => {
-            drawJumpHotSpots(drawedHotspotsData, '')
+            drawJumpHotSpots(drawedHotspotsData.current, '')
             // addDsc()
-        }, 1000)
+        }, 0)
 
         renderer.setPixelRatio(window.devicePixelRatio)
         //确保区域大小
         renderer.setSize(width, height)
-        container = document.getElementById('container')
+
+        // 添加前 先删除之前的子元素 再添加新VR图
+        // container.removeChild()
         container.appendChild(renderer.domElement)
 
         // 当鼠标指针移动到元素上方，并按下鼠标按键（左、右键均可）
         document
             .getElementsByTagName('canvas')[0]
             .addEventListener('mousedown', onDocumentMouseDown, false)
-        document
-            .getElementsByTagName('canvas')[0]
-            .addEventListener('mousemove', onDocumentMouseMove, false)
-        document
-            .getElementsByTagName('canvas')[0]
-            .addEventListener('mouseup', onDocumentMouseUp, false)
-        controls = new OrbitControls(camera, renderer.domElement)
-    }
+        // document
+        //     .getElementsByTagName('canvas')[0]
+        //     .addEventListener('mousemove', onDocumentMouseMove, false)
+        // document
+        //     .getElementsByTagName('canvas')[0]
+        //     .addEventListener('mouseup', onDocumentMouseUp, false)
+        initcontrols()
+  }
+  // 初始化控制器
+  const initcontrols = () => {
+    controls = new OrbitControls(camera, renderer.domElement)
+    // console.log(controls,'--controls')
+      //是否可以缩放
+      controls.enableZoom = false
+      //是否自动旋转
+      controls.autoRotate = false
+      // 使动画循环使用时阻尼或自转 意思是否有惯性
+      controls.enableDamping = true;
+      controls.zoom0 = 0
+      controls.zoomSpeed=0
+  }
 
     // 执行渲染
-    const update = () => {
-        //控制自动旋转速度
-        if (isUserInteracting === false) {
-            lon += 0
-        }
-        lat = Math.max(-85, Math.min(85, lat))
-        phi = THREE.Math.degToRad(90 - lat)
-        theta = THREE.Math.degToRad(lon) //degToRad()方法返回与参数degrees所表示的角度相等的弧度值
-        camera.target.x = 500 * Math.sin(phi) * Math.cos(theta)
-        camera.target.y = 500 * Math.cos(phi)
-        camera.target.z = 500 * Math.sin(phi) * Math.sin(theta)
-        camera.lookAt(camera.target)
-        renderer.render(scene, camera)
-    }
+    // const update = () => {
+    //     //控制自动旋转速度
+    //     if (isUserInteracting === false) {
+    //         lon += 0
+    //     }
+    //     lat = Math.max(-85, Math.min(85, lat))
+    //     phi = THREE.Math.degToRad(90 - lat)
+    //     theta = THREE.Math.degToRad(lon) //degToRad()方法返回与参数degrees所表示的角度相等的弧度值
+    //     camera.target.x = 500 * Math.sin(phi) * Math.cos(theta)
+    //     camera.target.y = 500 * Math.cos(phi)
+    //     camera.target.z = 500 * Math.sin(phi) * Math.sin(theta)
+    //     camera.lookAt(camera.target)
+    //     renderer.render(scene, camera)
+    // }
 
     // 递归调用
     const animate = () => {
-        // update()
         controls && controls.update()
         requestAnimationFrame(animate)
         renderer.render(scene, camera)
@@ -177,8 +223,8 @@ const Preview = () => {
     //绘制多个跳转热点
     const drawJumpHotSpots = (variable, newsrc) => {
         console.log(variable, '数据')
-        let textImg = getCanvasFont(100, 50, '我也不知道', 'green')
         variable.forEach(item => {
+            let textImg = getCanvasFont(100, 25, item.name, 'white')
             let position = item.point
             let canvas = document.createElement('canvas')
             canvas.style.backgroundColor = 'rgba(255,255,255,0)'
@@ -198,16 +244,16 @@ const Preview = () => {
                     transparent: false,
                 })
                 var sprite = new THREE.Sprite(spriteMaterial)
-              sprite.scale.set(30, 30, 30)
-              /**
-               * 此处添加自定义属性 不能跟原有属性重复避免报错
-               * name: 添加锚点名称
-               * ids: 唯一ID
-               * iconUrl: 图标
-              */
-                sprite.name = item.name; 
-                sprite.ids = item.id;
-                sprite.iconUrl = '';
+                sprite.scale.set(30, 30, 30)
+                /**
+                 * 此处添加自定义属性 不能跟原有属性重复避免报错
+                 * name: 添加锚点名称
+                 * ids: 唯一ID
+                 * iconUrl: 图标
+                 */
+                sprite.name = item.name
+                sprite.ids = item.id
+                sprite.iconUrl = ''
                 let rate = 0.8
                 var endV = new THREE.Vector3(
                     position.x * rate,
@@ -240,13 +286,13 @@ const Preview = () => {
             raycaster.camera = camera
             let intersects = raycaster.intersectObjects(scene.children)
             //如果绘制热点属于激活状态
-          console.log(intersects, '---intersects')
-              // 此处需要判断 是否有两个坐标为0 
-            let isOnShaft  = []
-            Object.keys(intersects[0].point).forEach((v) => {
-              if (intersects[0].point[v] === 0) {
-                isOnShaft.push(1)
-              }
+            console.log(intersects, '---intersects')
+            // 此处需要判断 是否有两个坐标为0
+            let isOnShaft = []
+            Object.keys(intersects[0].point).forEach(v => {
+                if (intersects[0].point[v] === 0) {
+                    isOnShaft.push(1)
+                }
             })
             // 添加標注
             if (refIsHotspot.current && isOnShaft.length < 2 && !refIsDelete.current) {
@@ -272,10 +318,14 @@ const Preview = () => {
                     var sprite = new THREE.Sprite(spriteMaterial)
                     sprite.scale.set(30, 30, 30)
                     let rate = 0.8
-                    var endV = new THREE.Vector3(intersects[0].point.x * rate, intersects[0].point.y * rate, intersects[0].point.z * rate)
+                    var endV = new THREE.Vector3(
+                        intersects[0].point.x * rate,
+                        intersects[0].point.y * rate,
+                        intersects[0].point.z * rate
+                    )
                     sprite.position.copy(endV)
-                  scene.add(sprite)
-                  addHotspot(intersects[0].point)
+                    scene.add(sprite)
+                    addHotspot(intersects[0].point)
                 }
                 //移除热点
             } else {
@@ -313,28 +363,28 @@ const Preview = () => {
                 }
             }
         }
-        onPointerDownPointerX = event.clientX
-        onPointerDownPointerY = event.clientY
-        onPointerDownLon = lon
-        onPointerDownLat = lat
-  }
-  
-  // 添加后将数据同步redux 数组中
-  const addHotspot = (coordinate) =>{
-      console.log(coordinate,'---coordinate')
-      // 
-    let newAnchorPoint = {
-      point: {
-        x:coordinate.x,
-        y: coordinate.y,
-        z: coordinate.z,
-      },
-      id: uuidv4(),
-      name: '这是第二个锚点',
-      iconUrl: ''
+        // onPointerDownPointerX = event.clientX
+        // onPointerDownPointerY = event.clientY
+        // onPointerDownLon = lon
+        // onPointerDownLat = lat
     }
-    dispatch(actions.addAnchorPoint(newAnchorPoint))
-  }
+
+    // 添加后将数据同步redux 数组中
+    const addHotspot = coordinate => {
+        console.log(coordinate, '---coordinate')
+        //
+        let newAnchorPoint = {
+            point: {
+                x: coordinate.x,
+                y: coordinate.y,
+                z: coordinate.z,
+            },
+            id: uuidv4(),
+            name: '这是一个锚点',
+            iconUrl: '',
+        }
+        dispatch(actions.addAnchorPoint(newAnchorPoint))
+    }
 
     // 添加描述
     const addDsc = () => {
@@ -396,13 +446,13 @@ const Preview = () => {
     }
 
     // 鼠标滑动 全景查看
-    const onDocumentMouseMove = event => {
-        if (isUserInteracting === true) {
-            console.log('可以移动')
-            lon = (onPointerDownPointerX - event.clientX) * 0.1 + onPointerDownLon
-            lat = (event.clientY - onPointerDownPointerY) * 0.1 + onPointerDownLat
-        }
-    }
+    // const onDocumentMouseMove = event => {
+    //     if (isUserInteracting === true) {
+    //         console.log('可以移动')
+    //         lon = (onPointerDownPointerX - event.clientX) * 0.1 + onPointerDownLon
+    //         lat = (event.clientY - onPointerDownPointerY) * 0.1 + onPointerDownLat
+    //     }
+    // }
 
     // 鼠标交互结束
     const onDocumentMouseUp = () => {

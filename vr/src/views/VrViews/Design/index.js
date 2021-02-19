@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import Preview from './Perviews/index'
-import Edit  from './Edit/index'
+import Edit from './Edit/index'
+import Header from './Header/index'
 import { Button } from 'antd';
 import reducer from './reducers.js';
 import { injectReducer } from 'reducers';
@@ -28,7 +29,7 @@ const Contenet = styled.div`
 const SidebarWrap = styled.div`
   flex: 0 0 248px;
   width: 248px;
-
+  overflow: auto;
   .ant-tabs {
     overflow: initial !important;
   }
@@ -43,8 +44,7 @@ const PreviewWrap = styled.div`
 const Design = () => {
   return (
     <Container>
-      <Button type="primary">Button</Button>
-      {/* <Header /> */}
+      <Header />
       <Contenet>
         <SidebarWrap>
           <Edit/>

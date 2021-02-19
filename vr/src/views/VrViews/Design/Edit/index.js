@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState,useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 // imoprt styles from './index.less'
 import { actions } from '../reducers'
@@ -6,7 +6,8 @@ import {
     selectIsHotspot,
     selectIsDelete,
     selectPanoramicData,
-    selectProjectData,
+  selectProjectData,
+  selectActiveId
 } from '../reselect'
 
 import { Switch, Menu, Form, Input, Select, Space, Card, TreeSelect, Collapse } from 'antd'
@@ -22,14 +23,37 @@ const Edit = () => {
     const isDelete = useSelector(selectIsDelete())
     const panoramicData = useSelector(selectPanoramicData()) // 项目数据
     const projectData = useSelector(selectProjectData()) // 项目数据
+    const activeId = useSelector(selectActiveId()) // 当前高亮视图ID
+  console.log(activeId,'---activeId')
+    const [activeConfig, setActiveConfig] = useState({ //  // 配置信息
+      name: '',
+      id: '',
+      url: '',
+      active: true,
+      autoRotate: false, //是否自动旋转
+      // 锚点信息
+      anchorPoint: [
+          {
+              point: {
+                  x: 180.01349809670057,
+                  y: 15.79023683858044,
+                  z: 465.07418151652786,
+              },
+              id: '2102091411',
+              name: '海边',
+              iconUrl: 'haibian',
+          },
+      ],
+    })
+  
+    // 获取默认数据
+  useEffect(() => {
+    setActiveConfig( panoramicData[0])
+     // 并打开当前场景数据
+     changeView(panoramicData[0].id)
+    }, [])
+  
 
-    // 投放标注
-    const isHotspotChange = () => {
-        dispatch(actions.changeIsHotspot(!isHotspot))
-    }
-    const handleClick = e => {
-        console.log('click ', e)
-    }
 
     const [form] = Form.useForm()
     const onGenderChange = value => {
@@ -48,14 +72,23 @@ const Edit = () => {
         }
     }
 
-    console.log(projectData, '--projectData')
-
-    const callback = key => {
+    // 切换场景 根据点击ID 修改场景信息
+    const changeView = key => {
+        dispatch(actions.changeVrView(key))
         console.log(key)
-    }
+  }
+  
+  useEffect(() => {
+    console.log(  [activeId],'-----activeId')
+   
+  }, [activeId])
+
+    // 获取到当前高亮数据信息 展示对应的设置信息
+    // 如果没有切换 则默认设置 数据中第一项为 当前展示
 
     return (
-        <div>
+  
+  <div style={{overflow: 'auto'}}>
             <Space direction='vertical' style={{ width: '100%' }}>
                 <Card title='操作台' style={{ width: '100%' }}>
                     <Form.Item name='note' label='标注投放：'>
@@ -110,20 +143,29 @@ const Edit = () => {
                                 ) : null
                             }}
                         </Form.Item>
+                        <Form.Item name='note' label='是否自动旋转'>
+                            <Switch
+                                checkedChildren='开启'
+                                unCheckedChildren='关闭'
+                                checked={activeConfig.autoRotate}
+                                onChange={() => {}}
+                            />
+                        </Form.Item>
                     </Form>
                 </Card>
                 <Card title={projectData.name} style={{ width: '100%' }}>
-                    <Collapse onChange={callback} accordion>
+                    <Collapse onChange={changeView} accordion  defaultActiveKey={[activeId]}>
                         {panoramicData.map(panoramic => {
                             return (
                                 <Panel header={panoramic.name} key={panoramic.id}>
-                                    <Collapse defaultActiveKey='1'>
+                                    <Collapse>
                                         {panoramic.anchorPoint.length &&
                                             panoramic.anchorPoint.map(anchor => {
                                                 return (
-                                                    <Panel header={anchor.name} key={anchor.id}>
-                                                        
-                                                    </Panel>
+                                                    <Panel
+                                                        header={anchor.name}
+                                                        key={anchor.id}
+                                                    ></Panel>
                                                 )
                                             })}
                                     </Collapse>

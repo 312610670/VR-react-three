@@ -3,6 +3,7 @@ import React from 'react';
 // import Preview from ''
 import Design from '../VrViews/Design/index';
 import DemoBox from '../VrViews/Demo/index'
+import ExhibitionView from '../VrViews/ExhibitionView/index'
 // 
 const routerMap = [
   {
@@ -19,6 +20,11 @@ const routerMap = [
     path: '/vr/demo',
     component: <DemoBox/>,
   },
+  {
+    path: '/view',
+    component: <ExhibitionView/>,
+  },
+
 
 ]
 

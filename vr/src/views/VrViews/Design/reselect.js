@@ -10,6 +10,7 @@ export const selectVrData = () =>
     return state.vrData || initialState
   });
 
+  // ------------------- 视图编辑 --------------------
   // 添加热点
 export const selectIsHotspot = () => 
   createSelector(selectGlobal, (state) => {
@@ -23,7 +24,7 @@ export const selectIsHotspot = () =>
   });
 
 
-  // 每个项目的场景数据
+// 每个项目的场景数据
 export const selectPanoramicData = () =>
   createSelector(selectGlobal, (state) => {
     return state.vrData.panoramicData 
@@ -34,4 +35,20 @@ export const selectPanoramicData = () =>
 export const selectProjectData = () =>
   createSelector(selectGlobal, (state) => {
     return state.vrData.projectData 
-})
+  })
+
+  // ---------------------展示---------------
+//测试数据
+  export const selectTestData = () =>
+  createSelector(selectGlobal, (state) => {
+    return state.vrData.testData 
+  })
+  
+
+  // ----------------------编辑栏---------
+
+  // 当前高亮id
+  export const selectActiveId = () =>
+  createSelector(selectGlobal, (state) => {
+    return state.vrData.activeId 
+  })
