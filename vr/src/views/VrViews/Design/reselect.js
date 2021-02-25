@@ -17,6 +17,13 @@ export const selectIsHotspot = () =>
     return state.vrData.isHotspot 
   });
 
+// 是否自动旋转
+export const selectAutoRotate = () => 
+createSelector(selectGlobal, (state) => {
+  return state.vrData.autoRotate 
+});
+
+
   // 删除热点
   export const selectIsDelete = () => 
   createSelector(selectGlobal, (state) => {

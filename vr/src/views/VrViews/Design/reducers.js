@@ -5,9 +5,8 @@ export const initialState = {
     isHotspot: false, // 是否投放热点
     isDelete: false, // 是否删除热点
     activeId: '', //当前展示vr id
-
+    autoRotate: false, //是否自动旋转
     // 全景图信息
-
     projectData: {
         name: '第一个项目',
         id: '2102271653',
@@ -20,7 +19,7 @@ export const initialState = {
             id: '2102271653',
             url: 'huisuo',
             active: true,
-            autoRotate: true, //是否自动旋转
+
             // 锚点信息
             anchorPoint: [
                 {
@@ -279,6 +278,11 @@ const vrDesign = createSlice({
         changeIsDelete: (state, action) => {
             state.isDelete = action.payload
         },
+        // 是否开启删除热点
+        changeAutoRotate: (state, action) => {
+            state.autoRotate = action.payload
+        },
+
         // 添加热点数据
         addAnchorPoint: (state, action) => {
             console.log(action.payload, state.activeId)
@@ -286,7 +290,8 @@ const vrDesign = createSlice({
             // state.panoramicData.anchorPoint = state.panoramicData.anchorPoint.push(action.payload)
         },
         // 编辑栏切换高亮数据
-        changeVrView: (state, action) => {
+      changeVrView: (state, action) => {
+          console.log('changebview 在改变')
             state.activeId = action.payload
         },
     },

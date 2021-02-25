@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react'
+import React, { useState,useEffect,useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 // imoprt styles from './index.less'
 import { actions } from '../reducers'
@@ -7,7 +7,8 @@ import {
     selectIsDelete,
     selectPanoramicData,
   selectProjectData,
-  selectActiveId
+  selectActiveId,
+  selectAutoRotate
 } from '../reselect'
 
 import { Switch, Menu, Form, Input, Select, Space, Card, TreeSelect, Collapse } from 'antd'
@@ -24,7 +25,9 @@ const Edit = () => {
     const panoramicData = useSelector(selectPanoramicData()) // 项目数据
     const projectData = useSelector(selectProjectData()) // 项目数据
     const activeId = useSelector(selectActiveId()) // 当前高亮视图ID
-  console.log(activeId,'---activeId')
+    console.log(activeId, '---activeId')
+    const autoRotate = useSelector(selectAutoRotate())
+  
     const [activeConfig, setActiveConfig] = useState({ //  // 配置信息
       name: '',
       id: '',
@@ -106,7 +109,15 @@ const Edit = () => {
                             checked={isDelete}
                             onChange={() => dispatch(actions.changeIsDelete(!isDelete))}
                         />
-                    </Form.Item>
+            </Form.Item>
+            <Form.Item name='note' label='是否自动旋转'>
+                            <Switch
+                                checkedChildren='开启'
+                                unCheckedChildren='关闭'
+                                checked={autoRotate}
+                                onChange={useMemo(() => () => dispatch(actions.changeAutoRotate(!autoRotate)),[autoRotate, dispatch])}
+                            />
+                        </Form.Item>
                 </Card>
                 <Card title='配置信息' style={{ width: '100%' }}>
                     <Form>
@@ -143,14 +154,7 @@ const Edit = () => {
                                 ) : null
                             }}
                         </Form.Item>
-                        <Form.Item name='note' label='是否自动旋转'>
-                            <Switch
-                                checkedChildren='开启'
-                                unCheckedChildren='关闭'
-                                checked={activeConfig.autoRotate}
-                                onChange={() => {}}
-                            />
-                        </Form.Item>
+                      
                     </Form>
                 </Card>
                 <Card title={projectData.name} style={{ width: '100%' }}>

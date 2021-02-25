@@ -65,7 +65,7 @@ const ExhibitionView = () => {
     // const panoramicData = useSelector(selectPanoramicData()) // 项目数据
     const testData = useSelector(selectTestData()) // 项目数据
     const { panoramicData } = testData
-    console.log(testData, '-ceshi shuju ')
+    console.log(JSON.stringify(testData), '-ceshi shuju ')
 
     const refIsHotspot = useRef(isHotspot)
     const refIsDelete = useRef(isDelete)

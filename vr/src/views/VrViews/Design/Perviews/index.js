@@ -1,11 +1,17 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useMemo } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import * as THREE from 'three'
 import OrbitControls from 'three-orbitcontrols'
 
 import { useDispatch, useSelector } from 'react-redux'
 import { selectVrData } from '../reselect'
-import { selectIsHotspot, selectIsDelete, selectActiveId } from '../reselect'
+import {
+    selectIsHotspot,
+    selectIsDelete,
+    selectActiveId,
+    selectPanoramicData,
+    selectAutoRotate,
+} from '../reselect'
 import { actions } from '../reducers'
 
 // import { Button, Switch } from 'antd'
@@ -15,6 +21,7 @@ import huisuo from 'static/images/huisuo.jpg'
 import haibian from 'static/images/haibian.jpg'
 import keting from 'static/images/keting.jpg'
 import haozhai from 'static/images/haozhai.jpg'
+import gif from 'static/images/zhe.gif'
 
 import hotspot from 'static/images/hotspot.jpg'
 import './index.css'
@@ -52,31 +59,32 @@ const Preview = () => {
      *      远截面
      **/
     let renderer = new THREE.WebGLRenderer({ antialias: true })
+
     let controls
     let mesh
 
     // 设置全场唯一canvas
 
     const dispatch = useDispatch()
-    const vrData = useSelector(selectVrData())
+    // const vrData = useSelector(selectVrData())
     const isHotspot = useSelector(selectIsHotspot()) // 是否投放跳转点 删除
     const isDelete = useSelector(selectIsDelete()) // 是否投放跳转点 删除
+    const autoRotate = useSelector(selectAutoRotate())
 
-    // const panoramicData = (selectPanoramicData()) // 项目数据
+    // 可展示數據
+    const panoramicData = useSelector(selectPanoramicData()) // 项目数据
     const activeId = useSelector(selectActiveId()) // 当前高亮视图ID
-
-    console.log(vrData, '---panoramicData')
-    const { panoramicData } = vrData
 
     const refIsHotspot = useRef(isHotspot)
     const refIsDelete = useRef(isDelete)
     const drawedHotspotsData = useRef([])
 
-  useEffect(() => {
-      console.log(activeId, '切换的数据')
-      changeView(activeId ? activeId : '2102271653')
-      animate()
-    }, [activeId])
+    useEffect(() => {
+        console.log(activeId, '切换的数据')
+        changeView(activeId ? activeId : '2102271653')
+        animate()
+        initcontrols()
+    }, [activeId, autoRotate])
 
     useEffect(() => {
         refIsHotspot.current = isHotspot
@@ -122,11 +130,11 @@ const Preview = () => {
             alert('抱歉，一张图请选择panorama1，六张图请选择panorama6且只支持cubeFaces')
             return
         }
-        //  三维坐标轴
+        // //  三维坐标轴
         // var axesHelper = new THREE.AxesHelper(150);
         // scene.add(axesHelper);
 
-        camera.target = new THREE.Vector3(0, 0, 0)
+        camera.target = new THREE.Vector3(0, 0, 0) // 调用该函数的结果将复制给该Vector3对象。
         camera.position.set(-10, 0, -10)
         // SphereGeometry(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength)
         // - radius：球体半径
@@ -138,37 +146,24 @@ const Preview = () => {
         // - thetaLength: 垂直方向是球体曲面覆盖的弧度，默认值为Math.PI
         const geometry = new THREE.SphereGeometry(500, 60, 40)
         geometry.scale(-1, 1, 1)
-        //防止跨域用canvas作为纹理
-        let canvas = document.createElement('canvas')
-        canvas.style.backgroundColor = 'rgba(255,255,255,0)'
-        let context = canvas.getContext('2d')
-        let img = new Image()
-        img.src = vrImgurl
-        img.onload = function () {
-            canvas.width = width
-            canvas.height = height
-            context.drawImage(img, 0, 0, width, height)
-            let demo = new THREE.TextureLoader().load(vrImgurl)
-            let material = new THREE.MeshBasicMaterial({
-                map: demo, // 此处使用 demo 的参数 图片更为清晰
-                transparent: false,
-            })
-            mesh = new THREE.Mesh(geometry, material)
-            scene.add(mesh)
-        }
 
+        let demo = new THREE.TextureLoader().load(vrImgurl)
+        let material = new THREE.MeshBasicMaterial({
+            map: demo, // 此处使用 demo 的参数 图片更为清晰
+            transparent: false,
+        })
+        mesh = new THREE.Mesh(geometry, material)
+        // 几何体  材料（渲染图）
+        scene.add(mesh)
         //画已经保存的热点
         setTimeout(() => {
             drawJumpHotSpots(drawedHotspotsData.current, '')
             // addDsc()
         }, 0)
-
         renderer.setPixelRatio(window.devicePixelRatio)
         //确保区域大小
         renderer.setSize(width, height)
-
         // 添加前 先删除之前的子元素 再添加新VR图
-        // container.removeChild()
         container.appendChild(renderer.domElement)
 
         // 当鼠标指针移动到元素上方，并按下鼠标按键（左、右键均可）
@@ -181,21 +176,20 @@ const Preview = () => {
         // document
         //     .getElementsByTagName('canvas')[0]
         //     .addEventListener('mouseup', onDocumentMouseUp, false)
-        initcontrols()
-  }
-  // 初始化控制器
-  const initcontrols = () => {
-    controls = new OrbitControls(camera, renderer.domElement)
-    // console.log(controls,'--controls')
-      //是否可以缩放
-      controls.enableZoom = false
-      //是否自动旋转
-      controls.autoRotate = false
-      // 使动画循环使用时阻尼或自转 意思是否有惯性
-      controls.enableDamping = true;
-      controls.zoom0 = 0
-      controls.zoomSpeed=0
-  }
+    }
+    // 初始化控制器
+    const initcontrols = () => {
+        controls = new OrbitControls(camera, renderer.domElement)
+        console.log(controls, '--controls')
+        //是否可以缩放
+        controls.enableZoom = false
+        //是否自动旋转
+        controls.autoRotate = autoRotate
+        // 使动画循环使用时阻尼或自转 意思是否有惯性
+        controls.enableDamping = true
+        controls.zoom0 = 0
+        controls.zoomSpeed = 0
+    }
 
     // 执行渲染
     // const update = () => {
@@ -224,69 +218,79 @@ const Preview = () => {
     const drawJumpHotSpots = (variable, newsrc) => {
         console.log(variable, '数据')
         variable.forEach(item => {
-            let textImg = getCanvasFont(100, 25, item.name, 'white')
             let position = item.point
-            let canvas = document.createElement('canvas')
-            canvas.style.backgroundColor = 'rgba(255,255,255,0)'
-            let context = canvas.getContext('2d')
-            canvas.width = 128
-            canvas.height = 128
-            let img = new Image()
-            img.src = hotspot
-            img.onload = function () {
-                context.drawImage(img, 0, 0, 128, 128)
-                // 纹理 添加canvas 图片
-                let texture = new THREE.Texture(textImg) // 此处将 图片跟文字画到同一个数据中
-                texture.needsUpdate = true // 将其设置为true，以便在下次使用纹理时触发一次更新
-                texture.minFilter = THREE.LinearFilter //当一个纹素覆盖小于一个像素时，贴图将如何采样。默认值为THREE.LinearMipmapLinearFilter， 它将使用mipmapping以及三次线性滤镜。
-                var spriteMaterial = new THREE.SpriteMaterial({
-                    map: texture,
-                    transparent: false,
-                })
-                var sprite = new THREE.Sprite(spriteMaterial)
-                sprite.scale.set(30, 30, 30)
-                /**
-                 * 此处添加自定义属性 不能跟原有属性重复避免报错
-                 * name: 添加锚点名称
-                 * ids: 唯一ID
-                 * iconUrl: 图标
-                 */
-                sprite.name = item.name
-                sprite.ids = item.id
-                sprite.iconUrl = ''
-                let rate = 0.8
-                var endV = new THREE.Vector3(
-                    position.x * rate,
-                    position.y * rate,
-                    position.z * rate
-                )
-                sprite.position.copy(endV)
-                scene.add(sprite)
-            }
+            // TextureLoader 异步记载图片
+            var texture = new THREE.TextureLoader().load(gif)
+            // SpriteMaterial 材质
+            var spriteMaterial = new THREE.SpriteMaterial({
+                map: texture,
+                transparent: true,
+            })
+            // 物体 Sprite
+            var sprite = new THREE.Sprite(spriteMaterial)
+            sprite.scale.set(30, 30, 30)
+            /**
+             * 此处添加自定义属性 不能跟原有属性重复避免报错
+             * name: 添加锚点名称
+             * ids: 唯一ID
+             * iconUrl: 图标
+             */
+            sprite.name = item.name
+            sprite.ids = item.id
+            sprite.iconUrl = ''
+            let rate = 0.8
+            var endV = new THREE.Vector3(position.x * rate, position.y * rate, position.z * rate)
+            sprite.position.copy(endV)
+            scene.add(sprite)
         })
     }
 
     // 鼠標点击添加一个 确定点击位置  --  锚点 ---待配置 热点图片
     const onDocumentMouseDown = event => {
+        console.log(event, '--e.target')
+        /**
+     * 1、 camera.target 当前相机所正视的世界空间方向 赋值给 vector
+     * 2、根据配置页面 展示的宽高值 设置XYZ 轴
+     * 3、 vector.unproject(camera) 在投影中使用的摄像机。
+     * 4、 使用 光线投射Raycaster 计算鼠标在三维坐标中点击的坐标位置
+     *     这将创建一个新的raycaster对象。
+     *        let raycaster = new THREE.Raycaster(
+     *            camera.position,
+     *            vector.sub(camera.position).normalize() //初始化
+     *        )
+     *      Raycaster( origin : Vector3, direction : Vector3, near : Float, far : Float ) {
+            origin —— 光线投射的原点向量。
+            direction —— 向射线提供方向的方向向量，应当被标准化。
+            near —— 返回的所有结果比near远。near不能为负值，其默认值为0。
+            far —— 返回的所有结果都比far近。far不能小于near，其默认值为Infinity（正无穷。）
+     * 
+     * 
+     * 
+     * 
+    */
         isUserInteracting = true
         if (forType === 'Equirectangular') {
             event.preventDefault()
             // let vector = new THREE.Vector3() //三维坐标对象
             let vector = camera.target
+            console.log(vector, 'vector预计是坐标轴的位置')
             vector.set(
                 ((event.clientX - 248) / (window.innerWidth - 248)) * 2 - 1,
                 -((event.clientY - 32) / (window.innerHeight - 32)) * 2 + 1,
                 0.5
             )
+            // 在投影中使用的摄像机。
             vector.unproject(camera)
+            // 这将创建一个新的raycaster对象。
             let raycaster = new THREE.Raycaster(
                 camera.position,
-                vector.sub(camera.position).normalize() //初始化
+                vector.sub(camera.position).normalize() //初始化 光线投射的原点向量
             )
             raycaster.camera = camera
+            // 得到 点击的坐标 或 点击的标注点 
+            // intersects 每项中的object 的type 可以分辨 点击的是标注还是 场景图
             let intersects = raycaster.intersectObjects(scene.children)
             //如果绘制热点属于激活状态
-            console.log(intersects, '---intersects')
             // 此处需要判断 是否有两个坐标为0
             let isOnShaft = []
             Object.keys(intersects[0].point).forEach(v => {
@@ -296,27 +300,32 @@ const Preview = () => {
             })
             // 添加標注
             if (refIsHotspot.current && isOnShaft.length < 2 && !refIsDelete.current) {
-                let canvas = document.createElement('canvas')
-                canvas.style.backgroundColor = 'rgba(255,255,255,0)'
-                let context = canvas.getContext('2d')
-                canvas.width = 128
-                canvas.height = 128
+              
                 let img = new Image()
                 //这里发布的时候会出现http://localhost:8083/web/dist/static/images/hotspot.jpg
                 // img.src = "www.baidu.com/img/flexible/logo/pc/result.png";
                 //发布用
                 img.src = hotspot
                 img.onload = function () {
-                    context.drawImage(img, 0, 0, 128, 128)
-                    let texture = new THREE.Texture(canvas)
+                  // let texture = new THREE.TextureLoader().load(img)
+                  // // TextureLoader 异步记载图片
+                  // var texture = new THREE.TextureLoader().load(gif)
+                  // // SpriteMaterial 材质
+                  // var spriteMaterial = new THREE.SpriteMaterial({
+                  //     map: texture,
+                  //     transparent: true,
+                  // })  
+
+                    let texture = new THREE.Texture(img)
                     texture.needsUpdate = true
                     texture.minFilter = THREE.LinearFilter
                     var spriteMaterial = new THREE.SpriteMaterial({
                         map: texture,
                         transparent: false,
                     })
+                    // 创建一个 sprite  物体
                     var sprite = new THREE.Sprite(spriteMaterial)
-                    sprite.scale.set(30, 30, 30)
+                    sprite.scale.set(30, 30, 30) // 视图大小
                     let rate = 0.8
                     var endV = new THREE.Vector3(
                         intersects[0].point.x * rate,
@@ -337,24 +346,6 @@ const Preview = () => {
                         if (target.object && target.object.type.length > 0) {
                             if (target.object.type.toLowerCase() === 'sprite') {
                                 scene.remove(target.object)
-                                // this.$store.commit("deletedHotSpot");
-                                // this.$store.commit("hideHotSpot");
-                                // let location = target.object.position;
-                                // let panAndTilt = this.calculatePanandTilt(
-                                //   location.x * 1.25,
-                                //   location.y * 1.25,
-                                //   location.z * 1.25
-                                // );
-                                // this.$store.commit("showJumpHotSpot");
-                                // this.$store.commit("saveTempLocation", {
-                                //   location: [
-                                //     location.x * 1.25,
-                                //     location.y * 1.25,
-                                //     location.z * 1.25
-                                //   ],
-                                //   panAndTilt: panAndTilt,
-                                //   ID:"JumpHotSpot",
-                                // });
                             }
                         }
                     } catch (e) {
@@ -363,10 +354,6 @@ const Preview = () => {
                 }
             }
         }
-        // onPointerDownPointerX = event.clientX
-        // onPointerDownPointerY = event.clientY
-        // onPointerDownLon = lon
-        // onPointerDownLat = lat
     }
 
     // 添加后将数据同步redux 数组中
