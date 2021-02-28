@@ -1,7 +1,7 @@
 /**
  * create store
  */
-import { configureStore, combineReducers, Reducer } from '@reduxjs/toolkit';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
 // import { ThunkAction } from 'redux-thunk';
 import rootReducer, { staticReducers } from './rootReducer';
 

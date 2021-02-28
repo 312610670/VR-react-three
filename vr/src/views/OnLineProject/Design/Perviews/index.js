@@ -1,10 +1,13 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useMemo } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import * as THREE from 'three'
 import OrbitControls from 'three-orbitcontrols'
 
 import { useDispatch, useSelector } from 'react-redux'
 // import { selectVrData } from '../reselect'
+
+import { BrowserRouter as Router, Route, Switch, useParams, useLocation } from 'react-router-dom'
+
 import {
     selectIsHotspot,
     selectIsDelete,
@@ -14,6 +17,7 @@ import {
 } from '../reselect'
 import { actions } from '../reducers'
 
+import qs from 'qs'
 // import { Button, Switch } from 'antd'
 
 import fore from 'static/images/huisuo.jpg'
@@ -28,7 +32,41 @@ import './index.css'
 
 const forType = 'Equirectangular'
 // 控制器 对象
-const Preview = () => {
+const Preview = props => {
+    const location = useLocation()
+    const query = useMemo(() => {
+        return qs.parse(location.search.slice(1))
+    }, [location.search])
+    const dispatch = useDispatch()
+    // const OnLineProject = useSelector(selectVrData())
+    const isHotspot = useSelector(selectIsHotspot()) // 是否投放跳转点 删除
+    const isDelete = useSelector(selectIsDelete()) // 是否投放跳转点 删除
+    const autoRotate = useSelector(selectAutoRotate())
+
+    // 可展示數據
+    const panoramicData = useSelector(selectPanoramicData()) // 项目数据
+    const activeId = useSelector(selectActiveId()) // 当前高亮视图ID
+    const refIsHotspot = useRef(isHotspot)
+    const refIsDelete = useRef(isDelete)
+    const drawedHotspotsData = useRef([])
+
+    // 1、 根据路由获取当前场景数据
+    useEffect(() => {
+        // 获取当前编辑数据 初始化数据只存在
+        // setTimeout(() => {
+        //     dispatch(
+        //         actions.changeProjectData({
+        //             name: '想放弃了',
+        //             id: '2102271653',
+        //             url: '',
+        //             status: '',
+        //             scene_list: [],
+        //         })
+        //     )
+        // }, 3000)
+        return () => {}
+    }, [query])
+
     let scene = new THREE.Scene()
     //  1、 透视相机                        可查看视野角度            长宽比                     近截面 和远截面
     let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1500)
@@ -45,27 +83,11 @@ const Preview = () => {
 
     // 设置全场唯一canvas
 
-    const dispatch = useDispatch()
-    // const vrData = useSelector(selectVrData())
-    const isHotspot = useSelector(selectIsHotspot()) // 是否投放跳转点 删除
-    const isDelete = useSelector(selectIsDelete()) // 是否投放跳转点 删除
-    const autoRotate = useSelector(selectAutoRotate())
-
-    // 可展示數據
-    const panoramicData = useSelector(selectPanoramicData()) // 项目数据
-    const activeId = useSelector(selectActiveId()) // 当前高亮视图ID
-
-    const refIsHotspot = useRef(isHotspot)
-    const refIsDelete = useRef(isDelete)
-    const drawedHotspotsData = useRef([])
-
     useEffect(() => {
-        console.log(activeId, '切换的数据')
         changeView(activeId ? activeId : '2102271653')
-        animate()
-        initcontrols()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeId, autoRotate])
+       
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeId])
 
     useEffect(() => {
         refIsHotspot.current = isHotspot
@@ -76,18 +98,28 @@ const Preview = () => {
         // 初始化锚点数据
         drawedHotspotsData.current = []
         let showVr = []
-        panoramicData.forEach(item => {
-            if (item.id === id) {
-                showVr.push(item)
-                // 锚点 切换场景应当切换锚点数据
-                drawedHotspotsData.current = item.anchorPoint
-            }
-        })
-        init(showVr[0].url)
+        if (panoramicData.length > 0) {
+            panoramicData.forEach(item => {
+                if (item.id === id) {
+                    showVr.push(item)
+                    // 锚点 切换场景应当切换锚点数据
+                    drawedHotspotsData.current = item.anchor_list
+                }
+            })
+            console.log(panoramicData, '--showVr--', showVr)
+            init(panoramicData[0].url)
+      }
+      
+  }
+  useEffect(() => {
+    if (panoramicData.length > 0) {
+      init(panoramicData[0].url)
     }
+  }, [panoramicData])
 
     //  初始化
-    const init = (imgurl = fore) => {
+  const init = (imgurl = fore) => {
+      console.log(imgurl,'----imgurl')
         // 初始化先删除子节点
         let container = document.getElementById('container')
         if (container.childNodes.length) {
@@ -157,6 +189,8 @@ const Preview = () => {
         // document
         //     .getElementsByTagName('canvas')[0]
         //     .addEventListener('mouseup', onDocumentMouseUp, false)
+        animate()
+        initcontrols()
     }
     // 初始化控制器
     const initcontrols = () => {
@@ -198,8 +232,8 @@ const Preview = () => {
     //绘制多个跳转热点
     const drawJumpHotSpots = (variable, newsrc) => {
         console.log(variable, '数据')
-        variable.forEach(item => {
-            let position = item.point
+        variable.length> 0 && variable.forEach(item => {
+            // let position = item.point
             // TextureLoader 异步记载图片
             var texture = new THREE.TextureLoader().load(gif)
             // SpriteMaterial 材质
@@ -220,7 +254,7 @@ const Preview = () => {
             sprite.ids = item.id
             sprite.iconUrl = ''
             let rate = 0.8
-            var endV = new THREE.Vector3(position.x * rate, position.y * rate, position.z * rate)
+            var endV = new THREE.Vector3(item.x_axis * rate, item.Y_axis * rate, item.z_axis * rate)
             sprite.position.copy(endV)
             scene.add(sprite)
         })
@@ -228,7 +262,6 @@ const Preview = () => {
 
     // 鼠標点击添加一个 确定点击位置  --  锚点 ---待配置 热点图片
     const onDocumentMouseDown = event => {
-        console.log(event, '--e.target')
         /**
      * 1、 camera.target 当前相机所正视的世界空间方向 赋值给 vector
      * 2、根据配置页面 展示的宽高值 设置XYZ 轴
@@ -268,7 +301,7 @@ const Preview = () => {
                 vector.sub(camera.position).normalize() //初始化 光线投射的原点向量
             )
             raycaster.camera = camera
-            // 得到 点击的坐标 或 点击的标注点 
+            // 得到 点击的坐标 或 点击的标注点
             // intersects 每项中的object 的type 可以分辨 点击的是标注还是 场景图
             let intersects = raycaster.intersectObjects(scene.children)
             //如果绘制热点属于激活状态
@@ -281,22 +314,20 @@ const Preview = () => {
             })
             // 添加標注
             if (refIsHotspot.current && isOnShaft.length < 2 && !refIsDelete.current) {
-              
                 let img = new Image()
                 //这里发布的时候会出现http://localhost:8083/web/dist/static/images/hotspot.jpg
                 // img.src = "www.baidu.com/img/flexible/logo/pc/result.png";
                 //发布用
                 img.src = hotspot
                 img.onload = function () {
-                  // let texture = new THREE.TextureLoader().load(img)
-                  // // TextureLoader 异步记载图片
-                  // var texture = new THREE.TextureLoader().load(gif)
-                  // // SpriteMaterial 材质
-                  // var spriteMaterial = new THREE.SpriteMaterial({
-                  //     map: texture,
-                  //     transparent: true,
-                  // })  
-
+                    // let texture = new THREE.TextureLoader().load(img)
+                    // // TextureLoader 异步记载图片
+                    // var texture = new THREE.TextureLoader().load(gif)
+                    // // SpriteMaterial 材质
+                    // var spriteMaterial = new THREE.SpriteMaterial({
+                    //     map: texture,
+                    //     transparent: true,
+                    // })
                     let texture = new THREE.Texture(img)
                     texture.needsUpdate = true
                     texture.minFilter = THREE.LinearFilter
@@ -340,92 +371,19 @@ const Preview = () => {
     // 添加后将数据同步redux 数组中
     const addHotspot = coordinate => {
         console.log(coordinate, '---coordinate')
-        //
         let newAnchorPoint = {
-            point: {
-                x: coordinate.x,
-                y: coordinate.y,
-                z: coordinate.z,
-            },
-            id: uuidv4(),
+            x_axis: coordinate.x,
+            y_axis: coordinate.y,
+            z_axis: coordinate.z,
+            id: '',
             name: '这是一个锚点',
             iconUrl: '',
+            targect_scene_id: uuidv4(),
+            url: '',
+            status:''
         }
         dispatch(actions.addAnchorPoint(newAnchorPoint))
     }
-
-    // 添加描述
-    // const addDsc = () => {
-    //     //用canvas生成图片
-    //     let canvas = document.createElement('canvas')
-    //     let ctx = canvas.getContext('2d')
-    //     canvas.width = 300
-    //     canvas.height = 300
-    //     //制作矩形
-    //     ctx.fillStyle = '#0e0d0d'
-    //     ctx.fillRect(0, 0, 300, 300)
-    //     ctx.fillStyle = '#141414'
-    //     ctx.font = 'normal 18pt "楷体"'
-    //     ctx.fillText('模型介绍', 100, 20)
-    //     let textWord = '该模型由小少小同学制作完成'
-    //     //文字换行
-    //     let len = parseInt(textWord.length / 10)
-    //     for (let i = 0; i < len + 1; i++) {
-    //         let space = 10
-    //         if (i === len) {
-    //             space = textWord.length - len * 10
-    //         }
-    //         console.log('len+' + len, 'space+' + space)
-    //         let word = textWord.substr(i * 10, space)
-    //         ctx.fillText(word, 15, 60 * (i + 1))
-    //     }
-    //     //生成图片
-    //     let url = canvas.toDataURL('image/png')
-    //     //将图片构建到纹理中
-    //     let geometry1 = new THREE.PlaneGeometry(30, 30)
-    //     let texture = THREE.ImageUtils.loadTexture(url, null, function (t) {})
-
-    //     let material1 = new THREE.MeshBasicMaterial({
-    //         map: texture,
-    //         side: THREE.DoubleSide,
-    //         opacity: 1,
-    //         transparent: true,
-    //     })
-
-    //     let rect = new THREE.Mesh(geometry1, material1)
-    //     rect.position.set(43, 40, 25)
-    //     scene.add(rect)
-    // }
-
-    // const getCanvasFont = (w, h, textValue, fontColor) => {
-    //     var canvas = document.createElement('canvas')
-    //     canvas.width = w
-    //     canvas.height = h
-    //     var ctx = canvas.getContext('2d')
-    //     ctx.fillStyle = '#ff0000' //textBackground;
-    //     ctx.fillRect(0, 0, w, h)
-    //     ctx.font = h + "px '微软雅黑'"
-    //     ctx.textAlign = 'center'
-    //     ctx.textBaseline = 'middle'
-    //     ctx.fillStyle = fontColor
-    //     ctx.fillText(textValue, w / 2, h / 2 + 3)
-    //     //document.body.appendChild(canvas);
-    //     return canvas
-    // }
-
-    // 鼠标滑动 全景查看
-    // const onDocumentMouseMove = event => {
-    //     if (isUserInteracting === true) {
-    //         console.log('可以移动')
-    //         lon = (onPointerDownPointerX - event.clientX) * 0.1 + onPointerDownLon
-    //         lat = (event.clientY - onPointerDownPointerY) * 0.1 + onPointerDownLat
-    //     }
-    // }
-
-    // 鼠标交互结束
-    // const onDocumentMouseUp = () => {
-    //     isUserInteracting = false
-    // }
 
     // redux 配置
     // const isHotspotChange = () => {

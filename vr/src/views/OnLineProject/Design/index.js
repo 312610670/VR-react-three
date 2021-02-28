@@ -8,8 +8,8 @@ import reducer from './reducers.js';
 import { injectReducer } from 'reducers';
 // import { Switch, Route, Redirect } from 'react-router-dom';
 
-
-injectReducer('vrData',reducer)
+ 
+injectReducer('OnLineProject',reducer)
 
 const Container = styled.div`
   position: absolute;

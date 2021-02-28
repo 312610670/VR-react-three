@@ -48,8 +48,8 @@ const ExhibitionView = () => {
     let controls
 
     // const dispatch = useDispatch()
-    const vrData = useSelector(selectVrData())
-    console.log(vrData, '===vrData')
+    const OnLineProject = useSelector(selectVrData())
+    console.log(OnLineProject, '===OnLineProject')
     const isHotspot = useSelector(selectIsHotspot()) // 是否投放跳转点 删除
     const isDelete = useSelector(selectIsDelete()) // 是否投放跳转点 删除
 

@@ -27,7 +27,27 @@ import hotspot from 'static/images/hotspot.jpg'
 import './index.css'
 
 const forType = 'Equirectangular'
+
+// let arr = []
+
+// -------------自定义滑动查看------------------------------
+// 用户是否交互
+// let isUserInteracting = false
+//  const [isUserInteracting, setIsUserInteracting] = useState(false);
+// 点击X 轴坐标
+// let onPointerDownPointerX = 0
+// // 点击X 轴坐标
+// let onPointerDownPointerY = 0
+// let lon = 0
+// let lat = 0
+// let phi = 0
+// let theta = 0
+// let onPointerDownLon = lon
+// let onPointerDownLat = lat
+// -------------自定义滑动查看------------------------------
+
 // 控制器 对象
+
 const Preview = () => {
     let scene = new THREE.Scene()
     //  1、 透视相机                        可查看视野角度            长宽比                     近截面 和远截面
