@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-// imoprt styles from './index.less'
+
 import { v4 as uuidv4 } from 'uuid'
 
 import { actions } from '../reducers'
@@ -27,6 +27,8 @@ import {
     Button,
     Upload,
 } from 'antd'
+
+import { getKey } from '../../../../api/index'
 import { PlusSquareOutlined, UploadOutlined } from '@ant-design/icons'
 
 const { SubMenu } = Menu
@@ -42,8 +44,9 @@ const Edit = () => {
     const activeId = useSelector(selectActiveId()) // 当前高亮视图ID
 
     const autoRotate = useSelector(selectAutoRotate())
+    const [form] = Form.useForm()
+    const [secretKey, setSecretKey] = useState({})
 
-    console.log(panoramicData,'-修改后左边栏')
     const [activeConfig, setActiveConfig] = useState({
         // 配置信息
         name: '',
@@ -66,7 +69,8 @@ const Edit = () => {
         ],
     })
 
-    const [nPjData, setNPjData] = useState({
+    // 创建新项目使用数据
+    const [createProject, setCreateProject] = useState({
         scenceid: '',
         name: '',
         url: '',
@@ -84,9 +88,8 @@ const Edit = () => {
             changeView(panoramicData[0].id)
         }
     }, [])
-  
-    const [form] = Form.useForm()
 
+    // 配置信息
     const onGenderChange = value => {
         switch (value) {
             case 'male':
@@ -105,12 +108,16 @@ const Edit = () => {
 
     // 切换场景 根据点击ID 修改场景信息
     const changeView = key => {
-        dispatch(actions.changeVrView(key))
+        if (key !== activeId) {
+            console.log('执行changeg')
+            dispatch(actions.changeVrView(key))
+        }
         console.log(key)
     }
 
+    // 打开新增场景弹窗
     const openModal = () => {
-        setNPjData({
+        setCreateProject({
             uni_scene_id: '',
             name: '',
             url: '',
@@ -119,14 +126,20 @@ const Edit = () => {
             anchor_list: [],
         })
         setIsModalVisible(true)
+        getKey().then(res => {
+            if (res.status) {
+                setSecretKey(res.data)
+            }
+            console.log(res, '0000')
+        })
     }
     // 保存数据 添加到场景数据 关闭弹窗
-  const handleOk = () => {
-      let  activeId = uuidv4()
-      let endScen = Object.assign(nPjData, { uni_scene_id: activeId, url: 'huisuo' })
-      dispatch(actions.changeVrView(activeId))
-      dispatch(actions.addScence(endScen))
-      setIsModalVisible(false)
+    const handleOk = () => {
+        let activeId = uuidv4()
+        let endScen = Object.assign(createProject, { uni_scene_id: activeId, url: 'huisuo' })
+        dispatch(actions.changeVrView(activeId))
+        dispatch(actions.addScence(endScen))
+        setIsModalVisible(false)
     }
 
     // 清空参数 关闭弹窗
@@ -223,7 +236,8 @@ const Edit = () => {
                             return (
                                 <Panel header={panoramic.name} key={panoramic.scend}>
                                     <Collapse>
-                                        {panoramic.anchor_list && panoramic.anchor_list.length &&
+                                        {panoramic.anchor_list &&
+                                            panoramic.anchor_list.length &&
                                             panoramic.anchor_list.map(anchor => {
                                                 return (
                                                     <Panel
@@ -246,11 +260,13 @@ const Edit = () => {
                 onCancel={handleCancel}
             >
                 <Form>
-                    <Form.Item label='锚点名称' rules={[{ required: true }]}>
+                    <Form.Item label='场景名称' rules={[{ required: true }]}>
                         <Input
                             style={{ width: 120 }}
                             onChange={e => {
-                                setNPjData(Object.assign(nPjData, { name: e.target.value }))
+                                setCreateProject(
+                                    Object.assign(createProject, { name: e.target.value })
+                                )
                             }}
                         />
                     </Form.Item>
@@ -261,7 +277,6 @@ const Edit = () => {
                             }}
                             listType='picture'
                             beforeUpload={file => {
-                                console.log(file, '----')
                                 return new Promise(resolve => {
                                     const reader = new FileReader()
                                     reader.readAsDataURL(file)

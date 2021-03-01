@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { Link} from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Layout, Button, Table, Tag, Space, Modal, Input, Form } from 'antd'
 import { PlusSquareOutlined } from '@ant-design/icons'
 
-import  {getProjects} from '../../../api/index'
+import { getProjects, addProject } from '../../../api/index'
 
 const { Header, Footer, Sider, Content } = Layout
 const layout = {
@@ -41,7 +41,7 @@ const columns = [
         render: (text, record) => (
             <Space size='middle'>
                 <a>查看</a>
-               <Link to ={ `/on-line/design?id=${text.id}`}>编辑</Link>
+                <Link to={`/on-line/design?id=${text.id}`}>编辑</Link>
                 <a>删除</a>
             </Space>
         ),
@@ -49,26 +49,44 @@ const columns = [
 ]
 
 const AdminList = () => {
-  const [visible, setVisible] = useState(false)
-  const [data, setData] = useState([]);
-  useEffect(() => {
-    getProjects().then(res => {
-      if (res.status === 0 && res.error_code === 0) {
-        console.log(JSON.stringify(res.data))
-        setData(res.data)
-        // return res.data
-      }
-    })
-  }, [])
+    const [visible, setVisible] = useState(false)
+    const [data, setData] = useState([])
+    const [form] = Form.useForm()
+
+    // 添加数据
+    const submit = data => {
+        addProject(data)
+            .then(res => {
+                console.log(res, '--res')
+                setVisible(false)
+            })
+            .catch(err => {
+                console.log(err, '--err')
+            })
+    }
+
+    useEffect(() => {
+        getProjects().then(res => {
+            console.log(res, '---res.data')
+            if (res.status === true && res.error_code === 0) {
+                console.log(res.data, '---res.data')
+                setData(res.data)
+            }
+        })
+    }, [])
     return (
         <div>
-            <Layout>
-                <Sider>左边栏啊 啊啊</Sider>
+            <Layout
+                style={{
+                    height: '100vh',
+                }}
+            >
                 <Layout>
                     <Header className=''>
                         <Button
                             icon={<PlusSquareOutlined />}
                             onClick={() => {
+                                form.resetFields()
                                 setVisible(true)
                             }}
                             type='primary'
@@ -88,9 +106,15 @@ const AdminList = () => {
                 title='Modal'
                 visible={visible}
                 onOk={() => {
-                    setVisible(false)
+                    console.log(form, 'form')
+                    form.validateFields()
+                        .then(res => {
+                            submit(res)
+                        })
+                        .catch(err => {})
                 }}
                 onCancel={() => {
+                    // console.log(addProject, '--addProject')
                     setVisible(false)
                 }}
                 okText='确认'
@@ -98,25 +122,26 @@ const AdminList = () => {
             >
                 <Form
                     {...layout}
-                    name='basic'
+                    form={form}
+                    name={'addProject'}
                     onFinish={() => {
-                        console.log('onFinish')
+                        console.log('提交表单且数据验证成功后回调事件')
                     }}
-                    onFinishFailed={console.log('onFinishFailed')}
+                    onFinishFailed={console.log('提交表单且数据验证失败后回调事件')}
                 >
                     <Form.Item
                         label='項目名稱'
                         name='name'
-                        rules={[{ required: true, message: 'Please input your name!' }]}
+                        rules={[{ required: true, message: '填写项目名称!' }]}
                     >
                         <Input />
                     </Form.Item>
                     <Form.Item
                         label='项目描述'
                         name='description'
-                        rules={[{ required: true, message: 'Please input your description!' }]}
+                        rules={[{ required: true, message: '请填写项目描述!' }]}
                     >
-                        <Input.Password />
+                        <Input />
                     </Form.Item>
                 </Form>
             </Modal>

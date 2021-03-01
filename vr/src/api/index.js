@@ -9,3 +9,10 @@ export const getProjects = ()=> server.get('https://vr-api.wangjunmei.com/projec
 
 // 获取单个项目数据
 // export const getProjectData = server.get('https://vr-api.wangjunmei.com/test/project/list', {id:""})
+
+// 添加项目
+export const addProject = (data) => server.post('https://vr-api.wangjunmei.com/project/add', data)
+
+
+// 获取秘钥
+export const getKey = () => server.get('https://vr-api.wangjunmei.com/sts/tempkey')

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react'
+import React, { useEffect, useRef, useMemo, useCallback } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import * as THREE from 'three'
 import OrbitControls from 'three-orbitcontrols'
@@ -52,40 +52,17 @@ const Preview = props => {
 
     // 1、 根据路由获取当前场景数据
     useEffect(() => {
-        // 获取当前编辑数据 初始化数据只存在
-        // setTimeout(() => {
-        //     dispatch(
-        //         actions.changeProjectData({
-        //             name: '想放弃了',
-        //             id: '2102271653',
-        //             url: '',
-        //             status: '',
-        //             scene_list: [],
-        //         })
-        //     )
-        // }, 3000)
         return () => {}
     }, [query])
 
     let scene = new THREE.Scene()
-    //  1、 透视相机                        可查看视野角度            长宽比                     近截面 和远截面
     let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1500)
-    /**
-     *  透视相机四个参数 ：视野角度
-     *      长宽比
-     *      近截面
-     *      远截面
-     **/
     let renderer = new THREE.WebGLRenderer({ antialias: true })
-
     let controls
     let mesh
 
-    // 设置全场唯一canvas
-
     useEffect(() => {
         changeView(activeId ? activeId : '2102271653')
-       
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeId])
 
@@ -94,32 +71,26 @@ const Preview = props => {
         refIsDelete.current = isDelete
     }, [isHotspot, isDelete])
 
-    const changeView = id => {
-        // 初始化锚点数据
-        drawedHotspotsData.current = []
-        let showVr = []
-        if (panoramicData.length > 0) {
-            panoramicData.forEach(item => {
-                if (item.id === id) {
-                    showVr.push(item)
-                    // 锚点 切换场景应当切换锚点数据
-                    drawedHotspotsData.current = item.anchor_list
-                }
-            })
-            console.log(panoramicData, '--showVr--', showVr)
-            init(panoramicData[0].url)
-      }
-      
-  }
-  useEffect(() => {
-    if (panoramicData.length > 0) {
-      init(panoramicData[0].url)
-    }
-  }, [panoramicData])
 
+    const changeView =useCallback( id => {
+      // 初始化锚点数据
+      drawedHotspotsData.current = []
+    let showVr = []
+      if (panoramicData.length > 0) {
+          panoramicData.forEach(item => {
+              if (item.id === id) {
+                  showVr.push(item)
+                  // 锚点 切换场景应当切换锚点数据
+                  drawedHotspotsData.current = item.anchor_list
+              }
+          })
+          console.log(panoramicData, '--showVr--', showVr)
+          init(panoramicData[0].url)
+      }
+  },[activeId])
     //  初始化
-  const init = (imgurl = fore) => {
-      console.log(imgurl,'----imgurl')
+    const init = (imgurl = fore) => {
+        console.log(imgurl, '----imgurl')
         // 初始化先删除子节点
         let container = document.getElementById('container')
         if (container.childNodes.length) {
@@ -143,7 +114,7 @@ const Preview = props => {
             alert('抱歉，一张图请选择panorama1，六张图请选择panorama6且只支持cubeFaces')
             return
         }
-        // //  三维坐标轴
+        //  三维坐标轴
         // var axesHelper = new THREE.AxesHelper(150);
         // scene.add(axesHelper);
 
@@ -183,12 +154,6 @@ const Preview = props => {
         document
             .getElementsByTagName('canvas')[0]
             .addEventListener('mousedown', onDocumentMouseDown, false)
-        // document
-        //     .getElementsByTagName('canvas')[0]
-        //     .addEventListener('mousemove', onDocumentMouseMove, false)
-        // document
-        //     .getElementsByTagName('canvas')[0]
-        //     .addEventListener('mouseup', onDocumentMouseUp, false)
         animate()
         initcontrols()
     }
@@ -232,62 +197,45 @@ const Preview = props => {
     //绘制多个跳转热点
     const drawJumpHotSpots = (variable, newsrc) => {
         console.log(variable, '数据')
-        variable.length> 0 && variable.forEach(item => {
-            // let position = item.point
-            // TextureLoader 异步记载图片
-            var texture = new THREE.TextureLoader().load(gif)
-            // SpriteMaterial 材质
-            var spriteMaterial = new THREE.SpriteMaterial({
-                map: texture,
-                transparent: true,
+        variable.length > 0 &&
+            variable.forEach(item => {
+                // let position = item.point
+                // TextureLoader 异步记载图片
+                var texture = new THREE.TextureLoader().load(gif)
+                // SpriteMaterial 材质
+                var spriteMaterial = new THREE.SpriteMaterial({
+                    map: texture,
+                    transparent: true,
+                })
+                // 物体 Sprite
+                var sprite = new THREE.Sprite(spriteMaterial)
+                sprite.scale.set(30, 30, 30)
+                /**
+                 * 此处添加自定义属性 不能跟原有属性重复避免报错
+                 * name: 添加锚点名称
+                 * ids: 唯一ID
+                 * iconUrl: 图标
+                 */
+                sprite.name = item.name
+                sprite.ids = item.id
+                sprite.iconUrl = ''
+                let rate = 0.8
+                var endV = new THREE.Vector3(
+                    item.x_axis * rate,
+                    item.Y_axis * rate,
+                    item.z_axis * rate
+                )
+                sprite.position.copy(endV)
+                scene.add(sprite)
             })
-            // 物体 Sprite
-            var sprite = new THREE.Sprite(spriteMaterial)
-            sprite.scale.set(30, 30, 30)
-            /**
-             * 此处添加自定义属性 不能跟原有属性重复避免报错
-             * name: 添加锚点名称
-             * ids: 唯一ID
-             * iconUrl: 图标
-             */
-            sprite.name = item.name
-            sprite.ids = item.id
-            sprite.iconUrl = ''
-            let rate = 0.8
-            var endV = new THREE.Vector3(item.x_axis * rate, item.Y_axis * rate, item.z_axis * rate)
-            sprite.position.copy(endV)
-            scene.add(sprite)
-        })
     }
 
     // 鼠標点击添加一个 确定点击位置  --  锚点 ---待配置 热点图片
     const onDocumentMouseDown = event => {
-        /**
-     * 1、 camera.target 当前相机所正视的世界空间方向 赋值给 vector
-     * 2、根据配置页面 展示的宽高值 设置XYZ 轴
-     * 3、 vector.unproject(camera) 在投影中使用的摄像机。
-     * 4、 使用 光线投射Raycaster 计算鼠标在三维坐标中点击的坐标位置
-     *     这将创建一个新的raycaster对象。
-     *        let raycaster = new THREE.Raycaster(
-     *            camera.position,
-     *            vector.sub(camera.position).normalize() //初始化
-     *        )
-     *      Raycaster( origin : Vector3, direction : Vector3, near : Float, far : Float ) {
-            origin —— 光线投射的原点向量。
-            direction —— 向射线提供方向的方向向量，应当被标准化。
-            near —— 返回的所有结果比near远。near不能为负值，其默认值为0。
-            far —— 返回的所有结果都比far近。far不能小于near，其默认值为Infinity（正无穷。）
-     * 
-     * 
-     * 
-     * 
-    */
-        // isUserInteracting = true
         if (forType === 'Equirectangular') {
             event.preventDefault()
             // let vector = new THREE.Vector3() //三维坐标对象
             let vector = camera.target
-            console.log(vector, 'vector预计是坐标轴的位置')
             vector.set(
                 ((event.clientX - 248) / (window.innerWidth - 248)) * 2 - 1,
                 -((event.clientY - 32) / (window.innerHeight - 32)) * 2 + 1,
@@ -315,19 +263,8 @@ const Preview = props => {
             // 添加標注
             if (refIsHotspot.current && isOnShaft.length < 2 && !refIsDelete.current) {
                 let img = new Image()
-                //这里发布的时候会出现http://localhost:8083/web/dist/static/images/hotspot.jpg
-                // img.src = "www.baidu.com/img/flexible/logo/pc/result.png";
-                //发布用
                 img.src = hotspot
                 img.onload = function () {
-                    // let texture = new THREE.TextureLoader().load(img)
-                    // // TextureLoader 异步记载图片
-                    // var texture = new THREE.TextureLoader().load(gif)
-                    // // SpriteMaterial 材质
-                    // var spriteMaterial = new THREE.SpriteMaterial({
-                    //     map: texture,
-                    //     transparent: true,
-                    // })
                     let texture = new THREE.Texture(img)
                     texture.needsUpdate = true
                     texture.minFilter = THREE.LinearFilter
@@ -380,7 +317,7 @@ const Preview = props => {
             iconUrl: '',
             targect_scene_id: uuidv4(),
             url: '',
-            status:''
+            status: '',
         }
         dispatch(actions.addAnchorPoint(newAnchorPoint))
     }
