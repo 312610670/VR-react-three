@@ -62,7 +62,9 @@ const Preview = props => {
     let mesh
 
     useEffect(() => {
-        changeView(activeId ? activeId : '2102271653')
+        // 数据改变
+        console.log(panoramicData, '数据改变')
+        changeView(activeId)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeId])
 
@@ -71,23 +73,25 @@ const Preview = props => {
         refIsDelete.current = isDelete
     }, [isHotspot, isDelete])
 
-
-    const changeView =useCallback( id => {
-      // 初始化锚点数据
-      drawedHotspotsData.current = []
-    let showVr = []
-      if (panoramicData.length > 0) {
-          panoramicData.forEach(item => {
-              if (item.id === id) {
-                  showVr.push(item)
-                  // 锚点 切换场景应当切换锚点数据
-                  drawedHotspotsData.current = item.anchor_list
-              }
-          })
-          console.log(panoramicData, '--showVr--', showVr)
-          init(panoramicData[0].url)
-      }
-  },[activeId])
+    const changeView = useCallback(
+        id => {
+            console.log(activeId, '---activeId', id)
+            // 初始化锚点数据
+            drawedHotspotsData.current = []
+            let showVr = []
+            if (panoramicData.length > 0) {
+                panoramicData.forEach(item => {
+                    if (item.uni_scene_id === activeId) {
+                        showVr.push(item)
+                        // 锚点 切换场景应当切换锚点数据
+                        drawedHotspotsData.current = item.anchor_list
+                    }
+                })
+                init(panoramicData[0].url)
+            }
+        },
+        [activeId]
+    )
     //  初始化
     const init = (imgurl = fore) => {
         console.log(imgurl, '----imgurl')
@@ -196,38 +200,34 @@ const Preview = props => {
 
     //绘制多个跳转热点
     const drawJumpHotSpots = (variable, newsrc) => {
-        console.log(variable, '数据')
-        variable.length > 0 &&
-            variable.forEach(item => {
-                // let position = item.point
-                // TextureLoader 异步记载图片
-                var texture = new THREE.TextureLoader().load(gif)
-                // SpriteMaterial 材质
-                var spriteMaterial = new THREE.SpriteMaterial({
-                    map: texture,
-                    transparent: true,
-                })
-                // 物体 Sprite
-                var sprite = new THREE.Sprite(spriteMaterial)
-                sprite.scale.set(30, 30, 30)
-                /**
-                 * 此处添加自定义属性 不能跟原有属性重复避免报错
-                 * name: 添加锚点名称
-                 * ids: 唯一ID
-                 * iconUrl: 图标
-                 */
-                sprite.name = item.name
-                sprite.ids = item.id
-                sprite.iconUrl = ''
-                let rate = 0.8
-                var endV = new THREE.Vector3(
-                    item.x_axis * rate,
-                    item.Y_axis * rate,
-                    item.z_axis * rate
-                )
-                sprite.position.copy(endV)
-                scene.add(sprite)
+        // console.log(variable, '数据')
+        variable.forEach(item => {
+            // let position = item.point
+            console.log(item, '数据')
+            // TextureLoader 异步记载图片
+            var texture = new THREE.TextureLoader().load(gif)
+            // SpriteMaterial 材质
+            var spriteMaterial = new THREE.SpriteMaterial({
+                map: texture,
+                transparent: true,
             })
+            // 物体 Sprite
+            var sprite = new THREE.Sprite(spriteMaterial)
+            sprite.scale.set(30, 30, 30)
+            /**
+             * 此处添加自定义属性 不能跟原有属性重复避免报错
+             * name: 添加锚点名称
+             * ids: 唯一ID
+             * iconUrl: 图标
+             */
+            sprite.name = item.name
+            sprite.ids = item.id
+            sprite.iconUrl = ''
+            let rate = 0.8
+            var endV = new THREE.Vector3(item.x_axis * rate, item.y_axis * rate, item.z_axis * rate)
+            sprite.position.copy(endV)
+            scene.add(sprite)
+        })
     }
 
     // 鼠標点击添加一个 确定点击位置  --  锚点 ---待配置 热点图片

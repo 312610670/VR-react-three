@@ -5,7 +5,7 @@ import { PlusSquareOutlined } from '@ant-design/icons'
 
 import { getProjects, addProject } from '../../../api/index'
 
-const { Header, Footer, Sider, Content } = Layout
+const { Header, Footer, Content } = Layout
 const layout = {
     labelCol: { span: 4 },
     wrapperCol: { span: 16 },

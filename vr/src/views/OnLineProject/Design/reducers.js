@@ -147,15 +147,14 @@ const vrDesign = createSlice({
 
         // 添加热点数据
         addAnchorPoint: (state, action) => {
-          let list = [...state.panoramicData]
-          console.log(list, action.payload)
-          list.forEach((item) => {
-            if (item.uni_scene_id === state.activeId) {
-                item.anchor_list.push(action.payload)
-            }
-          })
-          state.panoramicData =list
-         
+            let list = [...state.panoramicData]
+            console.log(list, action.payload)
+            list.forEach(item => {
+                if (item.uni_scene_id === state.activeId) {
+                    item.anchor_list.push(action.payload)
+                }
+            })
+            state.panoramicData = list
         },
 
         // 编辑栏切换高亮数据
@@ -174,6 +173,7 @@ const vrDesign = createSlice({
         addScence: (state, action) => {
             let list = [...state.panoramicData]
             console.log(list, action.payload)
+            state.activeId = action.payload.uni_scene_id
             state.panoramicData = list.concat(action.payload)
         },
     },

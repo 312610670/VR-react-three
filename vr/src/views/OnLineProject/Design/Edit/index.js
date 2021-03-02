@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import COS from 'cos-js-sdk-v5'
 
 import { v4 as uuidv4 } from 'uuid'
 
@@ -15,25 +16,25 @@ import {
 
 import {
     Switch,
-    Menu,
+    // Menu,
     Form,
     Input,
     Select,
     Space,
     Card,
-    TreeSelect,
+    // TreeSelect,
     Collapse,
     Modal,
     Button,
     Upload,
 } from 'antd'
 
-import { getKey } from '../../../../api/index'
+import { getKey, uploadBase } from '../../../../api/index'
 import { PlusSquareOutlined, UploadOutlined } from '@ant-design/icons'
 
-const { SubMenu } = Menu
+// const { SubMenu } = Menu
 const { Option } = Select
-const { TreeNode } = TreeSelect
+// const { TreeNode } = TreeSelect
 const { Panel } = Collapse
 const Edit = () => {
     const dispatch = useDispatch()
@@ -42,10 +43,31 @@ const Edit = () => {
     const panoramicData = useSelector(selectPanoramicData()) // 项目数据
     const projectData = useSelector(selectProjectData()) // 项目数据
     const activeId = useSelector(selectActiveId()) // 当前高亮视图ID
+    // eslint-disable-next-line no-restricted-globals
+    const protocol = location.protocol === 'https:' ? 'https:' : 'http:'
+    // prefix 用于拼接请求 url 的前缀，域名使用存储桶的默认域名
+    const prefix = protocol + '//vr-demo-1255877297.cos.ap-guangzhou.myqcloud.com/'
+
+    console.log(prefix, '---prefix')
+    // 对更多字符编码的 url encode 格式
+    const camSafeUrlEncode = function (str) {
+        return encodeURIComponent(str)
+            .replace(/!/g, '%21')
+            .replace(/'/g, '%27')
+            .replace(/\(/g, '%28')
+            .replace(/\)/g, '%29')
+            .replace(/\*/g, '%2A')
+    }
 
     const autoRotate = useSelector(selectAutoRotate())
-    const [form] = Form.useForm()
+    // 新增场景表单
+    const [sceneForm] = Form.useForm()
+    // 配置信息表单
+    const [configForm] = Form.useForm()
+
     const [secretKey, setSecretKey] = useState({})
+
+    const cosRef = useRef()
 
     const [activeConfig, setActiveConfig] = useState({
         // 配置信息
@@ -89,17 +111,26 @@ const Edit = () => {
         }
     }, [])
 
+    useEffect(() => {
+        if (JSON.stringify(secretKey) !== '{}') {
+            cosRef.current = new COS({
+                SecretId: secretKey.temp_key.credentials.tmpSecretId,
+                SecretKey: secretKey.temp_key.credentials.tmpSecretKey,
+            })
+        }
+    }, [secretKey])
+
     // 配置信息
     const onGenderChange = value => {
         switch (value) {
             case 'male':
-                form.setFieldsValue({ note: 'Hi, man!' })
+                configForm.setFieldsValue({ note: 'Hi, man!' })
                 return
             case 'female':
-                form.setFieldsValue({ note: 'Hi, lady!' })
+                configForm.setFieldsValue({ note: 'Hi, lady!' })
                 return
             case 'other':
-                form.setFieldsValue({ note: 'Hi there!' })
+                configForm.setFieldsValue({ note: 'Hi there!' })
                 return
             default:
                 return
@@ -108,15 +139,16 @@ const Edit = () => {
 
     // 切换场景 根据点击ID 修改场景信息
     const changeView = key => {
-        if (key !== activeId) {
+        console.log(key, activeId, '当前高亮')
+        if (key && key !== activeId) {
             console.log('执行changeg')
             dispatch(actions.changeVrView(key))
         }
-        console.log(key)
     }
 
     // 打开新增场景弹窗
     const openModal = () => {
+        sceneForm.resetFields()
         setCreateProject({
             uni_scene_id: '',
             name: '',
@@ -135,11 +167,20 @@ const Edit = () => {
     }
     // 保存数据 添加到场景数据 关闭弹窗
     const handleOk = () => {
-        let activeId = uuidv4()
-        let endScen = Object.assign(createProject, { uni_scene_id: activeId, url: 'huisuo' })
-        dispatch(actions.changeVrView(activeId))
-        dispatch(actions.addScence(endScen))
-        setIsModalVisible(false)
+        sceneForm
+            .validateFields()
+            .then(res => {
+                console.log(res, '---sceneForm')
+                // let activeId = uuidv4()
+                // let endScen = Object.assign(createProject, {
+                //     uni_scene_id: activeId,
+                //     url: 'haozhai',
+                // })
+                // dispatch(actions.changeVrView(activeId))
+                // dispatch(actions.addScence(endScen))
+                // setIsModalVisible(false)
+            })
+            .catch(err => {})
     }
 
     // 清空参数 关闭弹窗
@@ -149,6 +190,53 @@ const Edit = () => {
 
     // 获取到当前高亮数据信息 展示对应的设置信息
     // 如果没有切换 则默认设置 数据中第一项为 当前展示
+  const uploadBase64 = async file => {
+        const reader = new FileReader()
+        reader.readAsDataURL(file)
+        reader.onload = () => {
+            uploadBase({
+                name: file.name,
+                file: reader.result,
+            })
+              .then(res => {
+                  return res.data.url
+                    console.log(res.data.url, '返回的文件路径')
+                })
+                .catch(err => {})
+        }
+    }
+
+    // 文件上传
+    const uploadProps = {
+      onChange: ( file) => {
+          console.log(file,'--嫦娥')
+        },
+        beforeUpload(file) {
+          uploadBase64(file)
+          return '4564654646'
+        },
+        action: prefix,
+        listType: 'picture',
+        data: {},
+        customRequest: e => {
+            // cosRef.current.putObject(
+            //     {
+            //         Bucket: 'vr-demo-1255877297',
+            //         Region: 'ap-guangzhou',
+            //         Key: 'e.filename',
+            //         StorageClass: 'STANDARD',
+            //         Body: e.file, // 上传文件对象
+            //         onProgress: function (progressData) {
+            //             console.log(JSON.stringify(progressData))
+            //         },
+            //     },
+            //     function (err, data) {
+            //       console.log(err,' err' )
+            //       console.log(data,'----data' )
+            //     }
+            // )
+        },
+    }
 
     return (
         <div style={{ overflow: 'auto' }}>
@@ -194,7 +282,7 @@ const Edit = () => {
                     </Form.Item>
                 </Card>
                 <Card title='配置信息' style={{ width: '100%' }}>
-                    <Form>
+                    <Form form={configForm}>
                         <Form.Item name='' label='锚点名称' rules={[{ required: true }]}>
                             <Input style={{ width: 120 }} />
                         </Form.Item>
@@ -234,7 +322,7 @@ const Edit = () => {
                     <Collapse onChange={changeView} accordion defaultActiveKey={[activeId]}>
                         {panoramicData.map(panoramic => {
                             return (
-                                <Panel header={panoramic.name} key={panoramic.scend}>
+                                <Panel header={panoramic.name} key={panoramic.uni_scene_id}>
                                     <Collapse>
                                         {panoramic.anchor_list &&
                                             panoramic.anchor_list.length &&
@@ -259,8 +347,8 @@ const Edit = () => {
                 onOk={handleOk}
                 onCancel={handleCancel}
             >
-                <Form>
-                    <Form.Item label='场景名称' rules={[{ required: true }]}>
+                <Form form={sceneForm} name='scene'>
+                    <Form.Item label='场景名称' name='name' rules={[{ required: true }]}>
                         <Input
                             style={{ width: 120 }}
                             onChange={e => {
@@ -270,37 +358,11 @@ const Edit = () => {
                             }}
                         />
                     </Form.Item>
-                    <Form.Item label='请上传全景图片' rules={[{ required: true }]}>
-                        <Upload
-                            onChange={e => {
-                                console.log(e, '文件該斌')
-                            }}
-                            listType='picture'
-                            beforeUpload={file => {
-                                return new Promise(resolve => {
-                                    const reader = new FileReader()
-                                    reader.readAsDataURL(file)
-                                    reader.onload = () => {
-                                        const img = document.createElement('img')
-                                        img.src = reader.result
-                                        img.onload = () => {
-                                            const canvas = document.createElement('canvas')
-                                            canvas.width = img.naturalWidth
-                                            canvas.height = img.naturalHeight
-                                            const ctx = canvas.getContext('2d')
-                                            ctx.drawImage(img, 0, 0)
-                                            ctx.fillStyle = 'red'
-                                            ctx.textBaseline = 'middle'
-                                            ctx.font = '33px Arial'
-                                            ctx.fillText('Ant Design', 20, 20)
-                                            canvas.toBlob(resolve)
-                                        }
-                                    }
-                                })
-                            }}
-                        >
+                    <Form.Item label='请上传全景图片' name='url' rules={[{ required: true }]}>
+                        <Upload {...uploadProps}>
                             <Button icon={<UploadOutlined />}>Upload</Button>
                         </Upload>
+                        {/* <input type='file' onChange={e => uploadFile(e)} /> */}
                     </Form.Item>
                 </Form>
             </Modal>

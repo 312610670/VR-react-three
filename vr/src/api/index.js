@@ -16,3 +16,5 @@ export const addProject = (data) => server.post('https://vr-api.wangjunmei.com/p
 
 // 获取秘钥
 export const getKey = () => server.get('https://vr-api.wangjunmei.com/sts/tempkey')
+
+export const uploadBase = (params) =>server.post('https://vr-api.wangjunmei.com/cos/upload',params)
