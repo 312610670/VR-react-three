@@ -1,10 +1,14 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useMemo, useState } from 'react'
 import * as THREE from 'three'
 import OrbitControls from 'three-orbitcontrols'
+import { getScene } from '../../../api/index'
+
+import { BrowserRouter as Router, Route, Switch, useParams, useLocation } from 'react-router-dom'
+import qs from 'qs'
 
 import {
-  // useDispatch,
-  useSelector
+    // useDispatch,
+    useSelector,
 } from 'react-redux'
 import { selectVrData } from '../Design/reselect'
 import { selectIsHotspot, selectIsDelete, selectTestData } from '../Design/reselect'
@@ -21,6 +25,13 @@ import hotspot from 'static/images/hotspot.jpg'
 import './index.css'
 
 const ExhibitionView = () => {
+    const location = useLocation()
+    const query = useMemo(() => {
+        return qs.parse(location.search.slice(1))
+    }, [location.search])
+
+    const panoramicData =[]
+  
     // const forType = 'Equirectangular'f
     let scene
     //  1、 透视相机                        可查看视野角度            长宽比                     近截面 和远截面
@@ -48,47 +59,37 @@ const ExhibitionView = () => {
     let controls
 
     // const dispatch = useDispatch()
-    const OnLineProject = useSelector(selectVrData())
-    console.log(OnLineProject, '===OnLineProject')
-    const isHotspot = useSelector(selectIsHotspot()) // 是否投放跳转点 删除
-    const isDelete = useSelector(selectIsDelete()) // 是否投放跳转点 删除
+    const [onLineProject, setOnLineProject] = useState({});
 
-    // const panoramicData = useSelector(selectPanoramicData()) // 项目数据
-    const testData = useSelector(selectTestData()) // 项目数据
-    const { panoramicData } = testData
-    console.log(JSON.stringify(testData), '-ceshi shuju ')
-
-    const refIsHotspot = useRef(isHotspot)
-    const refIsDelete = useRef(isDelete)
     const drawedHotspotsData = useRef([])
 
-    useEffect(() => {
-        changeView('2102271653')
-        animate()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    const getData = () => {
+        console.log(query.id, '---query.id')
+        getScene({project_id:query.id}).then(res => {
+          console.log(res)
+          res.data.forEach(item => {
+            if (item.id === query.id) {
+              setOnLineProject(item)
+            }
+          })
+        })
+    }
 
     useEffect(() => {
-        refIsHotspot.current = isHotspot
-        refIsDelete.current = isDelete
-    }, [isHotspot, isDelete])
+        getData()
+        // changeView('2102271653')
+        // animate()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     //  初始化
-    const init = (imgurl = 'huisuo') => {
+    const init = vrImgurl => {
         scene = new THREE.Scene()
         let container = document.getElementById('container')
         if (container.childNodes.length) {
             container.removeChild(container.childNodes[0])
         }
-        let vrImgurl =
-            imgurl === 'imgurl'
-                ? huisuo
-                : imgurl === 'haibian'
-                ? haibian
-                : imgurl === 'keting'
-                ? keting
-                : imgurl === 'haozhai'
-                ? haozhai
-                : huisuo
+
         mesh && scene.remove(mesh)
         let width = window.innerWidth
         let height = window.innerHeight
@@ -255,7 +256,6 @@ const ExhibitionView = () => {
         if (target.object.type.toLowerCase() === 'sprite') {
             changeView(target.object.ids)
         }
-      
     }
 
     const getCanvasFont = (w, h, textValue, fontColor) => {

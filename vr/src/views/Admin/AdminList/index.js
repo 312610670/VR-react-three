@@ -40,7 +40,7 @@ const columns = [
         key: 'action',
         render: (text, record) => (
             <Space size='middle'>
-                <a>查看</a>
+                <Link to={`/on-line/Exhibition?id=${text.id}`}>查看</Link>
                 <Link to={`/on-line/design?id=${text.id}`}>编辑</Link>
                 <a>删除</a>
             </Space>

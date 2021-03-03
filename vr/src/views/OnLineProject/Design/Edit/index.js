@@ -27,6 +27,7 @@ import {
     Modal,
     Button,
     Upload,
+    message,
 } from 'antd'
 
 import { getKey, uploadBase } from '../../../../api/index'
@@ -171,14 +172,15 @@ const Edit = () => {
             .validateFields()
             .then(res => {
                 console.log(res, '---sceneForm')
-                // let activeId = uuidv4()
-                // let endScen = Object.assign(createProject, {
-                //     uni_scene_id: activeId,
-                //     url: 'haozhai',
-                // })
-                // dispatch(actions.changeVrView(activeId))
-                // dispatch(actions.addScence(endScen))
-                // setIsModalVisible(false)
+                let activeId = uuidv4()
+                let endScen = Object.assign(createProject, {
+                    uni_scene_id: activeId,
+                    url: res.url,
+                    name: res.name,
+                })
+                dispatch(actions.addScence(endScen))
+                setTimeout(() => [dispatch(actions.changeVrView(activeId))], 0)
+                setIsModalVisible(false)
             })
             .catch(err => {})
     }
@@ -190,7 +192,7 @@ const Edit = () => {
 
     // 获取到当前高亮数据信息 展示对应的设置信息
     // 如果没有切换 则默认设置 数据中第一项为 当前展示
-  const uploadBase64 = async file => {
+    const uploadBase64 = async file => {
         const reader = new FileReader()
         reader.readAsDataURL(file)
         reader.onload = () => {
@@ -198,45 +200,29 @@ const Edit = () => {
                 name: file.name,
                 file: reader.result,
             })
-              .then(res => {
-                  return res.data.url
-                    console.log(res.data.url, '返回的文件路径')
+                .then(res => {
+                  console.log(res, '上传返回')
+                  message.success('上传完成可以继续')
+                    sceneForm.setFieldsValue({ url: res.data.url })
                 })
                 .catch(err => {})
         }
     }
 
+    //
     // 文件上传
     const uploadProps = {
-      onChange: ( file) => {
-          console.log(file,'--嫦娥')
-        },
-        beforeUpload(file) {
-          uploadBase64(file)
-          return '4564654646'
-        },
         action: prefix,
-        listType: 'picture',
-        data: {},
-        customRequest: e => {
-            // cosRef.current.putObject(
-            //     {
-            //         Bucket: 'vr-demo-1255877297',
-            //         Region: 'ap-guangzhou',
-            //         Key: 'e.filename',
-            //         StorageClass: 'STANDARD',
-            //         Body: e.file, // 上传文件对象
-            //         onProgress: function (progressData) {
-            //             console.log(JSON.stringify(progressData))
-            //         },
-            //     },
-            //     function (err, data) {
-            //       console.log(err,' err' )
-            //       console.log(data,'----data' )
-            //     }
-            // )
+        customRequest: file => {
+            console.log(file, '---file')
+            uploadBase64(file.file)
         },
+        beforeUpload: file => {},
     }
+    // const normFile = e => {
+    //     console.log('Upload event:', e)
+    //     return e && [{ url: 'e.fileList' }]
+    // }
 
     return (
         <div style={{ overflow: 'auto' }}>
@@ -349,20 +335,12 @@ const Edit = () => {
             >
                 <Form form={sceneForm} name='scene'>
                     <Form.Item label='场景名称' name='name' rules={[{ required: true }]}>
-                        <Input
-                            style={{ width: 120 }}
-                            onChange={e => {
-                                setCreateProject(
-                                    Object.assign(createProject, { name: e.target.value })
-                                )
-                            }}
-                        />
+                        <Input style={{ width: 120 }} />
                     </Form.Item>
                     <Form.Item label='请上传全景图片' name='url' rules={[{ required: true }]}>
                         <Upload {...uploadProps}>
                             <Button icon={<UploadOutlined />}>Upload</Button>
                         </Upload>
-                        {/* <input type='file' onChange={e => uploadFile(e)} /> */}
                     </Form.Item>
                 </Form>
             </Modal>

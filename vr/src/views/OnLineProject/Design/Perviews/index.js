@@ -63,7 +63,7 @@ const Preview = props => {
 
     useEffect(() => {
         // 数据改变
-        console.log(panoramicData, '数据改变')
+        console.log(panoramicData, activeId, '数据改变')
         changeView(activeId)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeId])
@@ -73,25 +73,25 @@ const Preview = props => {
         refIsDelete.current = isDelete
     }, [isHotspot, isDelete])
 
-    const changeView = useCallback(
-        id => {
-            console.log(activeId, '---activeId', id)
-            // 初始化锚点数据
-            drawedHotspotsData.current = []
-            let showVr = []
-            if (panoramicData.length > 0) {
-                panoramicData.forEach(item => {
-                    if (item.uni_scene_id === activeId) {
-                        showVr.push(item)
-                        // 锚点 切换场景应当切换锚点数据
-                        drawedHotspotsData.current = item.anchor_list
-                    }
-                })
-                init(panoramicData[0].url)
-            }
-        },
-        [activeId]
-    )
+    const changeView = id => {
+        console.log(activeId, '---activeId', id)
+        // 初始化锚点数据
+        drawedHotspotsData.current = []
+        let showVr = []
+        console.log(panoramicData.length, panoramicData, '-panoramicData.length')
+        if (panoramicData.length > 0) {
+            panoramicData.forEach(item => {
+                if (item.uni_scene_id === activeId) {
+                    console.log(item, '-对比获取高亮数据')
+                    showVr.push(item)
+                    // 锚点 切换场景应当切换锚点数据
+                    drawedHotspotsData.current = item.anchor_list
+                }
+            })
+            console.log('初始化场景，场景数据为：', showVr[0])
+            init(showVr[0].url)
+        }
+    }
     //  初始化
     const init = (imgurl = fore) => {
         console.log(imgurl, '----imgurl')
@@ -100,21 +100,12 @@ const Preview = props => {
         if (container.childNodes.length) {
             container.removeChild(container.childNodes[0])
         }
-        let vrImgurl =
-            imgurl === 'imgurl'
-                ? huisuo
-                : imgurl === 'haibian'
-                ? haibian
-                : imgurl === 'keting'
-                ? keting
-                : imgurl === 'haozhai'
-                ? haozhai
-                : huisuo
-        console.log(vrImgurl, '---vrImgurl')
+
+        console.log(imgurl, '---imgurl')
         mesh && scene.remove(mesh)
         let width = document.getElementById('container').getBoundingClientRect().width
         let height = document.getElementById('container').getBoundingClientRect().height - 32
-        if ([vrImgurl].length > 1) {
+        if ([imgurl].length > 1) {
             alert('抱歉，一张图请选择panorama1，六张图请选择panorama6且只支持cubeFaces')
             return
         }
@@ -135,7 +126,7 @@ const Preview = props => {
         const geometry = new THREE.SphereGeometry(500, 60, 40)
         geometry.scale(-1, 1, 1)
 
-        let demo = new THREE.TextureLoader().load(vrImgurl)
+        let demo = new THREE.TextureLoader().load(imgurl)
         let material = new THREE.MeshBasicMaterial({
             map: demo, // 此处使用 demo 的参数 图片更为清晰
             transparent: false,

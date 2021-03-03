@@ -172,9 +172,9 @@ const vrDesign = createSlice({
         // 添加场景
         addScence: (state, action) => {
             let list = [...state.panoramicData]
-            console.log(list, action.payload)
-            state.activeId = action.payload.uni_scene_id
+            console.log(list, action.payload, '改变当前场景 获取所有数据设置对一个参数')
             state.panoramicData = list.concat(action.payload)
+          
         },
     },
 })
