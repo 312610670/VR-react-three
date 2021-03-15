@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { Button, Row, Col, message } from 'antd'
-import { Link } from 'react-router-dom'
+import { Link, useHistory } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { BrowserRouter as Router, Route, Switch, useParams, useLocation } from 'react-router-dom'
 import qs from 'qs'
@@ -15,8 +15,9 @@ import {
 
 import { addscene } from '../../../../api/index'
 
-
 const Header = () => {
+    const history = useHistory()
+
     const location = useLocation()
     const panoramicData = useSelector(selectPanoramicData()) // 项目数据
     const query = useMemo(() => {
@@ -30,12 +31,12 @@ const Header = () => {
             scene_list: panoramicData,
         }
         addscene(params).then(res => {
-          console.log(res, '提交返回结果')
-          if (res.status) {
-            message.success('提交成功', () => {
-              Router.push('/admin')
-            })
-          }
+            console.log(res, '提交返回结果')
+            if (res.status) {
+                message.success('提交成功', () => {
+                    history.push('/admin')
+                })
+            }
         })
         console.log(panoramicData, '--panoramicData')
     }

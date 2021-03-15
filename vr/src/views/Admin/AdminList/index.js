@@ -52,7 +52,7 @@ const AdminList = () => {
     const [visible, setVisible] = useState(false)
     const [data, setData] = useState([])
     const [form] = Form.useForm()
-
+    const [loading, setLoading] = useState(false)
     // 添加数据
     const submit = data => {
         addProject(data)
@@ -66,10 +66,11 @@ const AdminList = () => {
     }
 
     useEffect(() => {
+        setLoading(true)
         getProjects().then(res => {
             console.log(res, '---res.data')
             if (res.status === true && res.error_code === 0) {
-                console.log(res.data, '---res.data')
+                setLoading(false)
                 setData(res.data)
             }
         })
@@ -97,7 +98,7 @@ const AdminList = () => {
                         </Button>
                     </Header>
                     <Content style={{ padding: '40px' }}>
-                        <Table columns={columns} dataSource={data} rowKey='id' />
+                        <Table columns={columns} loading={loading} dataSource={data} rowKey='id' />
                     </Content>
                     <Footer>Footer</Footer>
                 </Layout>
@@ -114,7 +115,6 @@ const AdminList = () => {
                         .catch(err => {})
                 }}
                 onCancel={() => {
-                    // console.log(addProject, '--addProject')
                     setVisible(false)
                 }}
                 okText='确认'

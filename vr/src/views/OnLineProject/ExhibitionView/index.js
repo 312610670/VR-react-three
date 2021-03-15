@@ -6,19 +6,6 @@ import { getScene } from '../../../api/index'
 import { BrowserRouter as Router, Route, Switch, useParams, useLocation } from 'react-router-dom'
 import qs from 'qs'
 
-import {
-    // useDispatch,
-    useSelector,
-} from 'react-redux'
-import { selectVrData } from '../Design/reselect'
-import { selectIsHotspot, selectIsDelete, selectTestData } from '../Design/reselect'
-
-// import { Button, Switch } from 'antd'
-
-import huisuo from 'static/images/huisuo.jpg'
-import haibian from 'static/images/haibian.jpg'
-import keting from 'static/images/keting.jpg'
-import haozhai from 'static/images/haozhai.jpg'
 
 import hotspot from 'static/images/hotspot.jpg'
 
@@ -64,11 +51,11 @@ const ExhibitionView = () => {
     const drawedHotspotsData = useRef([])
 
     const getData = () => {
-        console.log(query.id, '---query.id')
+        console.log( query.id, '---query.id')
         getScene({project_id:query.id}).then(res => {
           console.log(res)
           res.data.forEach(item => {
-            if (item.id === query.id) {
+            if (item.id === Number(query.id)) {
               setOnLineProject(item)
             }
           })
@@ -81,6 +68,11 @@ const ExhibitionView = () => {
         // animate()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
+  
+    useEffect(() => {
+      
+    
+    }, [onLineProject])
 
     //  初始化
     const init = vrImgurl => {
@@ -161,22 +153,6 @@ const ExhibitionView = () => {
         controls.zoom0 = 0
         controls.zoomSpeed = 0
     }
-
-    // 执行渲染
-    // const update = () => {
-    //     //控制自动旋转速度
-    //     if (isUserInteracting === false) {
-    //         lon += 0
-    //     }
-    //     lat = Math.max(-85, Math.min(85, lat))
-    //     phi = THREE.Math.degToRad(90 - lat)
-    //     theta = THREE.Math.degToRad(lon) //degToRad()方法返回与参数degrees所表示的角度相等的弧度值
-    //     camera.target.x = 500 * Math.sin(phi) * Math.cos(theta)
-    //     camera.target.y = 500 * Math.cos(phi)
-    //     camera.target.z = 500 * Math.sin(phi) * Math.sin(theta)
-    //     camera.lookAt(camera.target)
-    //     renderer.render(scene, camera)
-    // }
 
     // 递归调用
     const animate = () => {
@@ -274,20 +250,6 @@ const ExhibitionView = () => {
         return canvas
     }
 
-    // 鼠标滑动 全景查看
-    // const onDocumentMouseMove = event => {
-    //     if (isUserInteracting === true) {
-    //         console.log('可以移动')
-    //         lon = (onPointerDownPointerX - event.clientX) * 0.1 + onPointerDownLon
-    //         lat = (event.clientY - onPointerDownPointerY) * 0.1 + onPointerDownLat
-    //     }
-    // }
-
-    // 鼠标交互结束
-    // const onDocumentMouseUp = () => {
-    //     isUserInteracting = false
-    // }
-
     const changeView = id => {
         // 初始化锚点数据
         drawedHotspotsData.current = []
@@ -303,29 +265,19 @@ const ExhibitionView = () => {
         init(showVr[0].url)
     }
 
-    // const changeView = (id) => {
-    //   console.log(panoramicData, 'panoramicData',id)
-    //   let showVr =[]
-    //   showVr = panoramicData.filter(item => {
-    //     return item.id === id
-    //   })
-    //   console.log(showVr[0],'showVr.url')
-    //   init(showVr[0].url)
-    // }
-
     return (
         <div className='container'>
             <div id='container' className='panoramaContent'></div>
 
             <div className='listView'>
-                {panoramicData.map(vrItem => {
+                {onLineProject.map(vrItem => {
                     return (
                         <div
-                            key={vrItem.id}
+                            key={vrItem.uni_scene_id}
                             className={'listBox'}
-                            onClick={() => changeView(vrItem.id)}
+                            onClick={() => changeView(vrItem.uni_scene_id)}
                         >
-                            <img className={'listImg'} src='./static/images/haibian.jpg' alt='' />
+                            <img className={'listImg'} src={vrItem.url} alt='' />
                             <div>{vrItem.name}</div>
                         </div>
                     )

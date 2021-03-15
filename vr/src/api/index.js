@@ -24,4 +24,4 @@ export const uploadBase = (params) => server.post('https://vr-api.wangjunmei.com
 export const addscene = (params) => server.post('https://vr-api.wangjunmei.com/scene/add', params)
 
 // 获取单个场景信息
-export const getScene = (params) => server.get('https://vr-api.wangjunmei.com/scene/list',params)
+export const getScene = (params) => server.get('https://vr-api.wangjunmei.com/scene/list',{params:params})
