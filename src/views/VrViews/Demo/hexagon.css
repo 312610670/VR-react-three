@@ -1,0 +1,8 @@
+.setingBox {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 200px;
+    height: 300px;
+    background: rgba(200, 200, 200, 0.6);
+}
