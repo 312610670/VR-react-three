@@ -58,6 +58,7 @@ const DemoBox = () => {
         faceMaterialArray.push(new THREE.MeshBasicMaterial({ map: zheng })) //正面
         faceMaterialArray.push(new THREE.MeshBasicMaterial({ map: bei })) // 背面
         material = new THREE.MeshFaceMaterial(faceMaterialArray)
+        let demo = new THREE.TextureLoader().load(fore)
 
         //防止跨域用canvas作为纹理 外部背景
         let canvas = document.createElement('canvas')
@@ -69,9 +70,9 @@ const DemoBox = () => {
             canvas.width = window.innerWidth
             canvas.height = window.innerHeight
             context.drawImage(img, 0, 0, window.innerWidth, window.innerHeight)
-            let demo = new THREE.TextureLoader().load(fore)
             let materialone = new THREE.MeshBasicMaterial({
                 map: demo, // 此处使用 demo 的参数 图片更为清晰
+                // color: '#00FFFF',
                 transparent: false,
             })
             let cubeone = new THREE.Mesh(geometryone, materialone)

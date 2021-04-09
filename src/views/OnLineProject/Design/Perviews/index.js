@@ -57,7 +57,7 @@ const Preview = props => {
         console.log(panoramicData, activeId, '数据改变')
         changeView(activeId)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeId, panoramicData])
+    }, [activeId])
 
     useEffect(() => {
         refIsHotspot.current = isHotspot

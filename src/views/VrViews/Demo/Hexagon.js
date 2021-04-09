@@ -30,7 +30,8 @@ renderer.setPixelRatio(window.devicePixelRatio)
 renderer.setSize(window.innerWidth, window.innerHeight)
 
 camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 100)
-camera.position.z = 0.01
+// camera.position.z = 0.01
+camera.position.set(10, 10, 10)
 
 const Hexagon = () => {
     const [autoRotate, setAutoRotate] = useState(false)

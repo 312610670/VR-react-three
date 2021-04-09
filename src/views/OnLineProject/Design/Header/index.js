@@ -30,6 +30,7 @@ const Header = () => {
             project_id: query.id,
             scene_list: panoramicData,
         }
+        console.log(JSON.stringify(params))
         addscene(params).then(res => {
             console.log(res, '提交返回结果')
             if (res.status) {

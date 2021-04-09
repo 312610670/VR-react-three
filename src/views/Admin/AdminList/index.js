@@ -73,7 +73,13 @@ const AdminList = () => {
         getProjects().then(res => {
             if (res.status === true && res.error_code === 0) {
                 setLoading(false)
-                setData(res.data)
+                let listData = []
+                res.data.forEach(element => {
+                    if (element.id > 14) {
+                        listData.push(element)
+                    }
+                })
+                setData(listData)
             }
         })
     }, [])

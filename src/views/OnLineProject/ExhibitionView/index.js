@@ -13,7 +13,7 @@ import hotspot from 'static/images/hotspot.jpg'
 
 import './index.css'
 
-let scene = new THREE.Scene()
+let scene
 //  1、 透视相机                        可查看视野角度            长宽比                     近截面 和远截面
 let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1500)
 /**
@@ -73,6 +73,7 @@ const ExhibitionView = () => {
 
     //  初始化
     const init = vrImgurl => {
+        scene = new THREE.Scene()
         let container = document.getElementById('container')
         if (container.childNodes.length) {
             container.removeChild(container.childNodes[0])
